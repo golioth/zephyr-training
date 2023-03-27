@@ -7,6 +7,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(golioth_iot, LOG_LEVEL_DBG);
 
+#include <net/golioth/settings.h>
 #include <net/golioth/system_client.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
@@ -17,6 +18,8 @@ LOG_MODULE_REGISTER(golioth_iot, LOG_LEVEL_DBG);
 #include "wifi_util.h"
 
 static struct golioth_client *client = GOLIOTH_SYSTEM_CLIENT_GET();
+static int32_t _loop_delay_s = 5;
+static k_tid_t _system_thread = 0;
 
 static K_SEM_DEFINE(golioth_connected, 0, 1);
 
@@ -68,9 +71,59 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb,
 	}
 }
 
+enum golioth_settings_status on_setting(
+		const char *key,
+		const struct golioth_settings_value *value)
+{
+	LOG_DBG("Received setting: key = %s, type = %d", key, value->type);
+	if (strcmp(key, "LOOP_DELAY_S") == 0) {
+		/* This setting is expected to be numeric, return an error if it's not */
+		if (value->type != GOLIOTH_SETTINGS_VALUE_TYPE_INT64) {
+			return GOLIOTH_SETTINGS_VALUE_FORMAT_NOT_VALID;
+		}
+
+		/* This setting must be in range [1, 100], return an error if it's not */
+		if (value->i64 < 1 || value->i64 > 100) {
+			return GOLIOTH_SETTINGS_VALUE_OUTSIDE_RANGE;
+		}
+
+		/* Setting has passed all checks, so apply it to the loop delay */
+		_loop_delay_s = (int32_t)value->i64;
+		LOG_INF("Set loop delay to %d seconds", _loop_delay_s);
+		k_wakeup(_system_thread);
+
+		return GOLIOTH_SETTINGS_SUCCESS;
+	}
+
+	if (strcmp(key, "BLINK_DELAY_MS") == 0) {
+		/* This setting is expected to be numeric, return an error if it's not */
+		if (value->type != GOLIOTH_SETTINGS_VALUE_TYPE_INT64) {
+			return GOLIOTH_SETTINGS_VALUE_FORMAT_NOT_VALID;
+		}
+
+		/* This setting must be in range [100, 2000], return an error if it's not */
+		if (value->i64 < 100 || value->i64 > 2000) {
+			LOG_ERR("Bounding error (100 < BLINK_DELAY_MS < 10000): %lld", value->i64);
+			return GOLIOTH_SETTINGS_VALUE_OUTSIDE_RANGE;
+		}
+
+		/* Setting has passed all checks, so apply it to the loop delay */
+		led_set_delay((uint32_t)value->i64);
+		LOG_INF("Set blink delay to %lld milliseconds", value->i64);
+		led_wake_thread();
+
+		return GOLIOTH_SETTINGS_SUCCESS;
+	}
+
+	/* If the setting is not recognized, we should return an error */
+	return GOLIOTH_SETTINGS_KEY_NOT_RECOGNIZED;
+}
+
 static void golioth_on_connect(struct golioth_client *client)
 {
 	k_sem_give(&golioth_connected);
+
+	golioth_settings_observe(client);
 }
 
 static int temperature_push_handler(struct golioth_req_rsp *rsp)
@@ -92,6 +145,9 @@ void main(void)
 
 	LOG_DBG("Start Golioth IoT");
 
+	/* Get system thread id so loop delay change event can wake main */
+	_system_thread = k_current_get();
+
 	gpio_pin_configure_dt(&button0, GPIO_INPUT);
 	gpio_pin_configure_dt(&button1, GPIO_INPUT);
 	gpio_pin_interrupt_configure_dt(&button0, GPIO_INT_EDGE_TO_ACTIVE);
@@ -102,6 +158,7 @@ void main(void)
 
 	wifi_connect();
 
+	golioth_settings_register_callback(client, on_setting);
 	client->on_connect = golioth_on_connect;
 	golioth_system_client_start();
 
@@ -130,6 +187,6 @@ void main(void)
 		}
 
 		++counter;
-		k_sleep(K_SECONDS(5));
+		k_sleep(K_SECONDS(_loop_delay_s));
 	}
 }
