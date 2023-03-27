@@ -1,0 +1,5 @@
+build*/
+.vscode
+.cache
+credentials.conf
+__pycache__/

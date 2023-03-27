@@ -1,0 +1,7 @@
+west-commands:
+  - file: utility/west-commands/west_kasm.py
+    commands:
+      - name: kasm
+        class: KASM
+        help: helper comand when using a kasm container
+

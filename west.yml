@@ -1,0 +1,31 @@
+manifest:
+  version: 0.7
+
+  projects:
+    - name: golioth
+      path: modules/lib/golioth
+      revision: v0.6.0
+      url: https://github.com/golioth/golioth-zephyr-sdk
+      west-commands: scripts/west-commands.yml
+      import:
+        file: west-ncs.yml
+        path-prefix: deps
+        name-allowlist:
+          - nrf
+          - zephyr
+          - cmsis
+          - hal_nordic
+          - mbedtls
+          - mbedtls-nrf
+          - mcuboot
+          - net-tools
+          - nrfxlib
+          - tfm-mcuboot
+          - trusted-firmware-m
+          - qcbor
+          - sdk-hostap
+          - segger
+          - tinycrypt
+  self:
+    path: app
+    west-commands: utility/west-commands/west-commands.yml
