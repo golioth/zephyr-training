@@ -11,5 +11,6 @@ target_include_directories(app PUBLIC ${ZEPHYR_BASE}/subsys/net/ip)
 
 target_sources(app PRIVATE
 	src/main.c
+	src/tem_sensor.c
 	src/wifi_util.c
 )
