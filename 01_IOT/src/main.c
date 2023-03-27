@@ -26,17 +26,45 @@ static const struct gpio_dt_spec button0 = GPIO_DT_SPEC_GET_OR(SW0_N, gpios, {0}
 static const struct gpio_dt_spec button1 = GPIO_DT_SPEC_GET_OR(SW1_N, gpios, {0});
 static struct gpio_callback button_cb_data;
 
+
+static int selected_led_state_handler(struct golioth_req_rsp *rsp)
+{
+	if (rsp->err) {
+		LOG_WRN("Failed to set selected LED state on Golioth: %d", rsp->err);
+		return rsp->err;
+	}
+
+	return 0;
+}
+
 void button_pressed(const struct device *dev, struct gpio_callback *cb,
 		    uint32_t pins)
 {
+	uint8_t led_sel;
+	char sbuf[32];
+
 	if (pins & BIT(button0.pin)) {
-		led_set_selected(0);
-		led_wake_thread();
+		led_sel = 0;
 	} else if (pins & BIT(button1.pin)) {
-		led_set_selected(1);
-		led_wake_thread();
+		led_sel = 1;
 	} else {
 		LOG_WRN("Ignoring unknown button press even: %d", pins);
+		return;
+	}
+
+	led_set_selected(led_sel);
+	led_wake_thread();
+
+	/* LED labels on board silk screen are +1 from LED Node definitions */
+	snprintk(sbuf, sizeof(sbuf), "\"LED%d\"", led_sel + 1);
+
+	int err = golioth_lightdb_set_cb(client, "selected_led",
+					 GOLIOTH_CONTENT_FORMAT_APP_JSON,
+					 sbuf, strlen(sbuf),
+					 selected_led_state_handler, NULL);
+	if (err) {
+		LOG_WRN("Failed to set counter: %d", err);
+		return;
 	}
 }
 
