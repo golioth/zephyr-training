@@ -72,7 +72,7 @@ class KASM(WestCommand):
                 log.die('cannot find output directory: ', output_dir)
 
             app_name = self.get_cmake_src_dir(build_dir)
-            format_filename = 'zephyr_{}_%H%M%S.bin'.format(app_name)
+            format_filename = 'zephyr_{}_%H%M%S.hex'.format(app_name)
 
             new_filename = time.strftime(format_filename, time.localtime())
             download_file_path=os.path.join(output_dir, new_filename)
