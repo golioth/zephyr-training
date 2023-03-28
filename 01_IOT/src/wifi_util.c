@@ -19,15 +19,13 @@ LOG_MODULE_DECLARE(golioth_iot, LOG_LEVEL_INF);
 #include <zephyr/sys/printk.h>
 #include <zephyr/init.h>
 
+#include "wifi_util.h"
 #include <zephyr/net/net_if.h>
-#include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/net/net_event.h>
 
 #include <zephyr/settings/settings.h>
 
 #include <qspi_if.h>
-
-#include "net_private.h"
 
 #define WIFI_SHELL_MODULE "wifi"
 
@@ -57,38 +55,15 @@ static struct {
 
 static K_SEM_DEFINE(wifi_connected_sem, 0, 1);
 
-static int cmd_wifi_status(void)
+int cmd_wifi_status(struct wifi_iface_status *status)
 {
 	struct net_if *iface = net_if_get_default();
-	struct wifi_iface_status status = { 0 };
 
-	if (net_mgmt(NET_REQUEST_WIFI_IFACE_STATUS, iface, &status,
+	if (net_mgmt(NET_REQUEST_WIFI_IFACE_STATUS, iface, status,
 				sizeof(struct wifi_iface_status))) {
 		LOG_INF("Status request failed");
 
 		return -ENOEXEC;
-	}
-
-	LOG_INF("==================");
-	LOG_INF("State: %s", wifi_state_txt(status.state));
-
-	if (status.state >= WIFI_STATE_ASSOCIATED) {
-		uint8_t mac_string_buf[sizeof("xx:xx:xx:xx:xx:xx")];
-
-		LOG_INF("Interface Mode: %s",
-		       wifi_mode_txt(status.iface_mode));
-		LOG_INF("Link Mode: %s",
-		       wifi_link_mode_txt(status.link_mode));
-		LOG_INF("SSID: %-32s", status.ssid);
-		LOG_INF("BSSID: %s",
-		       net_sprint_ll_addr_buf(
-				status.bssid, WIFI_MAC_ADDR_LEN,
-				mac_string_buf, sizeof(mac_string_buf)));
-		LOG_INF("Band: %s", wifi_band_txt(status.band));
-		LOG_INF("Channel: %d", status.channel);
-		LOG_INF("Security: %s", wifi_security_txt(status.security));
-		LOG_INF("MFP: %s", wifi_mfp_txt(status.mfp));
-		LOG_INF("RSSI: %d", status.rssi);
 	}
 	return 0;
 }
@@ -131,8 +106,6 @@ static void handle_wifi_disconnect_result(struct net_mgmt_event_callback *cb)
 		LOG_INF("Received Disconnected");
 		context.connected = false;
 	}
-
-	cmd_wifi_status();
 }
 
 static void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
@@ -313,7 +286,6 @@ int wifi_connect(void)
 	}
 
 	LOG_INF("Connection requested");
-
 
 	k_sem_take(&wifi_connected_sem, K_FOREVER);
 
