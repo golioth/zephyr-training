@@ -41,23 +41,26 @@ Building the Training Applications
 
 Each numbered directory contains a different applications used in the training.
 
-Prerequisite: Credentials
-=========================
+Storing Device Credentials
+==========================
 
-One credentials file may be used for all sample applications that require WiFi
-and Golioth credentials. Make a copy of ``credentials.conf_example``, rename it
-to ``credentials.conf`` and populate it with the following information:
+After flashing firmware to the device (see below) you will need to store your
+WiFi and Golioth credentials in flash memory. Perform this task using a serial
+terminal and the following commands:
 
-* The SSID and PSK (password) for your WiFi access point
-* Select the type of PSK encryption used by your access point by uncommenting
-  one of the lines in that file (WPA2 is selected by default)
-* Golioth device credentials
+```
+uart:~$ settings set wifi/ssid <my-wifi-ap-ssid>
+uart:~$ settings set wifi/psk <my-wifi-ap-password>
+uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
+uart:~$ settings set golioth/psk <my-psk>
+uart:~$ kernel reboot cold
+```
 
-  * Visit the `Golioth Console <https://console.golioth.io>`_ to create/view
-    your device credentials. (With Golioth's Dev Tier your first 50 devices are
-    free.)
+These credentials will be stored in the settings partition and will survive new
+application firmware flashed directly, or via OTA update.
 
-The credentials file is ignored and will not be included in commits.
+Note: The WiFi security type must be specified as a Kconfig command. Looks for a
+section on this in the prj.conf file. The default is WPA2.
 
 01-IOT
 ======
