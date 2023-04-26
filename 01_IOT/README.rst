@@ -1,226 +1,160 @@
-.. _wifi_station_sample:
-
-Wi-Fi: Station
+Section 1: IoT
 ##############
 
-.. contents::
-   :local:
-   :depth: 2
+The IoT sample demonstrates an IoT device that connects to WiFi and Golioth,
+then sends data, logs, and reacts to remote-procedure calls. Using this sample
+code you will learn about:
 
-The Station sample demonstrates how to connect the Wi-Fi® station to a specified access point using Dynamic Host Configuration Protocol (DHCP).
+* Building and flashing applications in Zephyr
+* Adding persistent credentials using the serial shell
+* Get to know the Golioth web console:
+   * Time-series and stateful data reported to the cloud
+   * Adjusting device settings using the cloud-side Settings service
+   * Receiving remote logging information from the device
+   * Using remote procedure call (RPC) to return current WiFi connection info
 
-Requirements
-************
+Hardware: Nordic nRF7002-DK
+***************************
 
-The sample supports the following development kit:
+This demonstrates how to interact with the `Golioth Cloud`_ using `Zephyr`_ on the
+`Nordic nRF7002 Development Kit`_.
 
-.. table-from-sample-yaml::
 
-Overview
-********
+Build Instructions
+******************
 
-This sample can perform Wi-Fi operations such as connect and disconnect in the 2.4GHz and 5GHz bands depending on the capabilities of an access point.
+Prerequisites
+=============
 
-Using this sample, the development kit can connect to the specified access point in :abbr:`STA (Station)` mode.
+Follow the README in the root of this repository to install a
+virtual environment and use `west init`/`west update` to clone all dependencies.
+Remember to restart your virtual environment when beginning a new terminal
+session.
 
-User interface
-**************
-The sample adds LED support to map with connection and disconnection events.
 
-LED 1:
-   Starts blinking when the sample is connected to the access point.
+Build project
+=============
 
-   Stops blinking when the sample is disconnected from the access point.
+From the root directory of this repository, build using the following command:
 
-Quad Serial Peripheral Interface (QSPI) encryption
-**************************************************
+.. code-block:: bash
 
-This sample demonstrates QSPI encryption API usage.
-The key can be set by the :kconfig:option:`CONFIG_NRF700X_QSPI_ENCRYPTION_KEY` Kconfig option.
+   $ (.venv) west build -b nrf7002dk_nrf5340_cpuapp 01_IOT
 
-If encryption of the QSPI traffic is required for the production devices, then matching keys must be programmed in both the nRF7002 OTP and non-volatile storage associated with the host.
-The key from non-volatile storage must be set as the encryption key using the APIs.
+Flash project
+=============
 
-Power management
-****************
+Plug the nRF7002-DK into the USB port on the short edge of the board. (Do not
+use the USB port labelled `nRF USB`.) Run the following command:
 
-This sample also enables Zephyr's power management policy by default, which puts the nRF5340 :term:`System on Chip (SoC)` into low-power mode whenever it is idle.
-See :ref:`zephyr:pm-guide` in the Zephyr documentation for more information on power management.
+.. code-block:: bash
 
-IP addressing
-*************
-The sample uses DHCP to obtain an IP address for the Wi-Fi interface. It starts with a default static IP address to handle networks without DHCP servers, or if the DHCP server is not available.
-Successful DHCP handshake will override the default static IP configuration.
+   $ (.venv) west flash
 
-The following static configuration is by default and can be changed in the ``prj.conf`` file:
+Add credentials
+===============
 
-.. code-block:: console
+Two serial ports will enumerate on your system. Use a serial terminal program to
+connect to the higher numbered serial port using 115200 8N1 as the settings. Use
+the following syntax to store your WiFi and Golioth credentials on the device:
 
-  CONFIG_NET_CONFIG_MY_IPV4_ADDR="192.168.1.98"
-  CONFIG_NET_CONFIG_MY_IPV4_NETMASK="255.255.255.0"
-  CONFIG_NET_CONFIG_MY_IPV4_GW="192.168.1.1"
+.. code-block:: bash
 
-Building and running
+   uart:~$ settings set wifi/ssid <my-wifi-ap-ssid>
+   uart:~$ settings set wifi/psk <my-wifi-ap-password>
+   uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
+   uart:~$ settings set golioth/psk <my-psk>
+   uart:~$ kernel reboot cold
+
+Application Behavior
 ********************
 
-.. |sample path| replace:: :file:`samples/wifi/sta`
+When the app begins running it will connect to WiFi, then connect to Golioth and
+begin streaming simulated temperature sensor data:
 
-.. include:: /includes/build_and_run_ns.txt
+.. code-block::
 
-Currently, the following board(s) are supported:
+   *** Booting Zephyr OS build fcaa60a99fa9 ***
+   [00:00:00.466,949] <inf> golioth_system: Initializing
+   [00:00:00.470,764] <inf> fs_nvs: 6 Sectors of 4096 bytes
+   [00:00:00.470,764] <inf> fs_nvs: alloc wra: 0, f78
+   [00:00:00.470,794] <inf> fs_nvs: data wra: 0, cc
+   [00:00:00.471,282] <inf> net_config: Initializing network
+   [00:00:00.471,282] <inf> net_config: Waiting interface 1 (0x200018d8) to be up...
+   [00:00:00.472,106] <inf> net_config: IPv4 address: 192.168.1.99
+   [00:00:00.472,167] <inf> net_config: Running dhcpv4 client...
+   [00:00:00.474,731] <dbg> golioth_iot: main: Start Golioth IoT
+   [00:00:00.474,761] <inf> golioth_iot: Starting nrf7002dk_nrf5340_cpuapp with CPU frequency: 64 MHz
+   [00:00:00.474,975] <inf> wpa_supp: z_wpas_start: 385 Starting wpa_supplicant thread with debug level: 3
 
-* nRF7002 DK
+   [00:00:00.475,189] <inf> wpa_supp: Successfully initialized wpa_supplicant
+   [00:00:01.474,884] <inf> golioth_iot: Static IP address (overridable): 192.168.1.99/255.255.255.0 -> 192.168.1.1
+   [00:00:03.078,918] <inf> golioth_iot: Connection requested
+   [00:00:06.664,428] <inf> wpa_supp: wlan0: SME: Trying to authenticate with c6:ff:d4:a8:fa:10 (SSID='YourWiFiSSID' freq=2437 MHz)
+   [00:00:06.667,877] <inf> wifi_nrf: wifi_nrf_wpa_supp_authenticate:Authentication request sent successfully
 
-You must configure the following Wi-Fi credentials in ``prj.conf``:
+   [00:00:06.923,370] <inf> wpa_supp: wlan0: Trying to associate with c6:ff:d4:a8:fa:10 (SSID='YourWiFiSSID' freq=2437 MHz)
+   [00:00:06.932,128] <inf> wifi_nrf: wifi_nrf_wpa_supp_associate: Association request sent successfully
 
-* Network name (SSID)
-* Key management
-* Password
+   [00:00:06.948,394] <inf> wpa_supp: wlan0: Associated with c6:ff:d4:a8:fa:10
+   [00:00:06.948,547] <inf> wpa_supp: wlan0: CTRL-EVENT-SUBNET-STATUS-UPDATE status=0
+   [00:00:06.972,045] <inf> wpa_supp: wlan0: WPA: Key negotiation completed with c6:ff:d4:a8:fa:10 [PTK=CCMP GTK=CCMP]
+   [00:00:06.972,290] <inf> wpa_supp: wlan0: CTRL-EVENT-CONNECTED - Connection to c6:ff:d4:a8:fa:10 completed [id=0 id_str=]
+   [00:00:06.979,614] <inf> golioth_iot: Connected
+   [00:00:06.981,872] <inf> golioth_system: Starting connect
+   [00:00:06.984,283] <err> golioth: Fail to get address (coap.golioth.io 5684) -11
+   [00:00:06.984,313] <err> golioth_system: Failed to connect: -11
+   [00:00:06.984,313] <wrn> golioth_system: Failed to connect: -11
+   [00:00:07.001,159] <inf> net_dhcpv4: Received: 192.168.1.127
+   [00:00:07.001,281] <inf> net_config: IPv4 address: 192.168.1.127
+   [00:00:07.001,281] <inf> net_config: Lease time: 43200 seconds
+   [00:00:07.001,312] <inf> net_config: Subnet: 255.255.255.0
+   [00:00:07.001,373] <inf> net_config: Router: 192.168.1.1
+   [00:00:07.002,197] <inf> golioth_iot: DHCP IP address: 192.168.1.127
+   [00:00:11.984,436] <inf> golioth_system: Starting connect
+   [00:00:12.360,626] <inf> golioth_iot: Sending hello! 0
+   [00:00:12.362,884] <inf> golioth_system: Client connected!
+   [00:00:12.362,213] <inf> golioth_iot: Streaming Temperature to Golioth: 28.060000
+   [00:00:17.362,457] <inf> golioth_iot: Sending hello! 1
+   [00:00:17.363,677] <inf> golioth_iot: Streaming Temperature to Golioth: 27.440000
 
-.. note::
-   You can also use ``menuconfig`` to enable ``Key management`` option.
+Button and LEDs
+===============
 
-See :ref:`zephyr:menuconfig` in the Zephyr documentation for instructions on how to run ``menuconfig``.
+One LED will always be blinking. Pressing the user buttons will change which LED
+is currently blinking
 
-To build for the nRF7002 DK, use the ``nrf7002dk_nrf5340_cpuapp`` build target.
-The following is an example of the CLI command:
+Time-Series and Stateful Data
+=============================
 
-.. code-block:: console
+Simulated temperature readings will be sent periodically to Golioth. Each of
+these readings is recorded with a timestamp when it was received.
 
-   west build -b nrf7002dk_nrf5340_cpuapp
+When the user buttons are pressed to change which LED is blinking, the name of
+the currently blinking LED (`LED` or `LED2`) will be recorded on the Golioth
+LightDB State service.
 
-Testing
-=======
+Sensor Reading and LED Blinking Frequency
+=========================================
 
-|test_sample|
+The Golioth Settings Service determines the frequency at which simulated
+temperature readings are sent and the frequency at which the LED blinks. The
+following keys are used for these settings:
 
-#. |connect_kit|
-#. |connect_terminal|
+* Sensor frequency (seconds): `LOOP_DELAY_S`
+* Blink frequency (milliseconds): `BLINK_DELAY_MS`
 
-   The sample shows the following output:
+Reporting WiFi Connection Information
+=====================================
 
-   .. code-block:: console
+A remote procedure call can be used to return information about the WiFi network
+to which the device is currently connected:
 
-    [00:00:02.016,235] <inf> sta: Connection requested
-    [00:00:02.316,314] <inf> sta: ==================
-    [00:00:02.316,314] <inf> sta: State: SCANNING
-    [00:00:02.616,424] <inf> sta: ==================
-    [00:00:02.616,424] <inf> sta: State: SCANNING
-    [00:00:02.916,534] <inf> sta: ==================
-    [00:00:02.916,534] <inf> sta: State: SCANNING
-    [00:00:03.216,613] <inf> sta: ==================
-    [00:00:03.216,613] <inf> sta: State: SCANNING
-    [00:00:03.516,723] <inf> sta: ==================
-    [00:00:03.516,723] <inf> sta: State: SCANNING
-    [00:00:03.816,802] <inf> sta: ==================
-    [00:00:03.816,802] <inf> sta: State: SCANNING
-    [00:00:04.116,882] <inf> sta: ==================
-    [00:00:04.116,882] <inf> sta: State: SCANNING
-    [00:00:04.416,961] <inf> sta: ==================
-    [00:00:04.416,961] <inf> sta: State: SCANNING
-    [00:00:04.717,071] <inf> sta: ==================
-    [00:00:04.717,071] <inf> sta: State: SCANNING
-    [00:00:05.017,150] <inf> sta: ==================
-    [00:00:05.017,150] <inf> sta: State: SCANNING
-    [00:00:05.317,230] <inf> sta: ==================
-    [00:00:05.317,230] <inf> sta: State: SCANNING
-    [00:00:05.617,309] <inf> sta: ==================
-    [00:00:05.617,309] <inf> sta: State: SCANNING
-    [00:00:05.917,419] <inf> sta: ==================
-    [00:00:05.917,419] <inf> sta: State: SCANNING
-    [00:00:06.217,529] <inf> sta: ==================
-    [00:00:06.217,529] <inf> sta: State: SCANNING
-    [00:00:06.517,639] <inf> sta: ==================
-    [00:00:06.517,639] <inf> sta: State: SCANNING
-    [00:00:06.817,749] <inf> sta: ==================
-    [00:00:06.817,749] <inf> sta: State: SCANNING
-    [00:00:07.117,858] <inf> sta: ==================
-    [00:00:07.117,858] <inf> sta: State: SCANNING
-    [00:00:07.336,730] <inf> wpa_supp: wlan0: SME: Trying to authenticate with aa:bb:cc:dd:ee:ff (SSID='<MySSID>' freq=5785 MHz)
-    [00:00:07.353,027] <inf> wifi_nrf: wifi_nrf_wpa_supp_authenticate:Authentication request sent successfully
+* `get_wifi_info`
 
-    [00:00:07.417,938] <inf> sta: ==================
-    [00:00:07.417,938] <inf> sta: State: AUTHENTICATING
-    [00:00:07.606,628] <inf> wpa_supp: wlan0: Trying to associate with aa:bb:cc:dd:ee:ff (SSID='<MySSID>' freq=5785 MHz)
-    [00:00:07.609,680] <inf> wifi_nrf: wifi_nrf_wpa_supp_associate: Association request sent successfully
+.. image:: img/rpc_wifi-info.jpg
 
-    [00:00:07.621,978] <inf> wpa_supp: wpa_drv_zep_get_ssid: SSID size: 5
+.. _Golioth Cloud: https://golioth.io/
+.. _Zephyr: https://www.zephyrproject.org/
+.. _Nordic nRF7002 Development Kit: https://www.nordicsemi.com/Products/Development-hardware/nRF7002-DK
 
-    [00:00:07.622,070] <inf> wpa_supp: wlan0: Associated with aa:bb:cc:dd:ee:ff
-    [00:00:07.622,192] <inf> wpa_supp: wlan0: CTRL-EVENT-CONNECTED - Connection to aa:bb:cc:dd:ee:ff completed [id=0 id_str=]
-    [00:00:07.622,192] <inf> sta: Connected
-    [00:00:07.623,779] <inf> wpa_supp: wlan0: CTRL-EVENT-SUBNET-STATUS-UPDATE status=0
-    [00:00:07.648,406] <inf> net_dhcpv4: Received: 192.168.119.6
-    [00:00:07.648,468] <inf> net_config: IPv4 address: 192.168.119.6
-    [00:00:07.648,498] <inf> net_config: Lease time: 3599 seconds
-    [00:00:07.648,498] <inf> net_config: Subnet: 255.255.255.0
-    [00:00:07.648,529] <inf> net_config: Router: 192.168.119.147
-    [00:00:07.648,559] <inf> sta: DHCP IP address: 192.168.119.6
-    [00:00:07.720,153] <inf> sta: ==================
-    [00:00:07.720,153] <inf> sta: State: COMPLETED
-    [00:00:07.720,153] <inf> sta: Interface Mode: STATION
-    [00:00:07.720,184] <inf> sta: Link Mode: WIFI 6 (802.11ax/HE)
-    [00:00:07.720,184] <inf> sta: SSID: <MySSID>
-    [00:00:07.720,214] <inf> sta: BSSID: aa:bb:cc:dd:ee:ff
-    [00:00:07.720,214] <inf> sta: Band: 5GHz
-    [00:00:07.720,214] <inf> sta: Channel: 157
-    [00:00:07.720,245] <inf> sta: Security: OPEN
-    [00:00:07.720,245] <inf> sta: MFP: UNKNOWN
-    [00:00:07.720,245] <inf> sta: RSSI: -57
-    [00:00:07.720,245] <inf> sta: Static IP address:
-
-Power management testing
-************************
-
-This sample can be used to measure current consumption of both the nRF5340 SoC and nRF7002 device independently by using two separate Power Profiler Kit II's (PPK2's).
-The nRF5340 SoC is connected to the first PPK2 and the nRF7002 DK is connected to the second PPK2.
-
-Hardware modifications
-======================
-
-To measure the current consumption of the nRF5340 SoC in the nRF7002 DK, complete the following steps:
-
- * Remove jumper on **P22** (VDD jumper).
- * Cut solder bridge **SB16**.
- * Make a short on solder bridge **SB17**.
- * Connect **GND** on PPK2 kit to **GND** on the nRF7002 DK.
-
-   You can use **P4** pin **7** mentioned as **GND** for ground.
-   Note that this connection requires a berg pin connector.
-
- * Connect the **Vout** on PPK2 to **P22** pin **1** on the nRF7002 DK.
-
-To measure the current consumption of the nRF7002 device in the nRF7002 DK, complete the following steps:
-
- * Remove jumper on **P23** (VBAT jumper).
- * Connect **GND** on PPK2 kit to **GND** on the nRF7002 DK.
-
-   You can use **P21** pin **1** mentioned as **-** (**MINUS**) for ground.
-
- * Connect the **Vout** on PPK2 to **P23** pin **1** on the nRF7002 DK.
-
-The following diagram illustrates a typical configuration for measuring current on the nRF7002 DK for both the nRF5340 SoC and the nRF7002 device:
-
-   .. figure:: ../../../doc/nrf/images/nrf7002_nrf5340_current_measurements.svg
-      :alt: Typical configuration for measuring current on the nRF7002 DK for both the nRF5340 SoC and the nRF7002 device.
-
-      Typical configuration for measuring current on the nRF7002 DK for both the nRF5340 SoC and the nRF7002 device.
-
-PPK2 usage and measurement
-==========================
-
-To measure the current consumption of the nRF5340 SoC and the nRF7002 device, complete the following steps:
-
-* Configure PPK2 connected to the nRF5340 SoC as a source meter with 1.8 volts.
-* Configure PPK2 connected to the nRF7002 device as a source meter with 3.6 volts.
-
-See :ref:`app_power_opt` for more information on power management testing and usage of the PPK2.
-
-The average current consumption in an idle case can be around ~1-2 mA in the nRF5340 SoC and ~20 µA in the nRF7002 device.
-
-Dependencies
-************
-
-This sample uses the following `sdk-nrfxlib`_ library:
-
-* :ref:`nrfxlib:nrf_security`
