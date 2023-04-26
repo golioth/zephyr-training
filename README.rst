@@ -48,13 +48,13 @@ After flashing firmware to the device (see below) you will need to store your
 WiFi and Golioth credentials in flash memory. Perform this task using a serial
 terminal and the following commands:
 
-```
-uart:~$ settings set wifi/ssid <my-wifi-ap-ssid>
-uart:~$ settings set wifi/psk <my-wifi-ap-password>
-uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
-uart:~$ settings set golioth/psk <my-psk>
-uart:~$ kernel reboot cold
-```
+.. code-block::
+
+   uart:~$ settings set wifi/ssid <my-wifi-ap-ssid>
+   uart:~$ settings set wifi/psk <my-wifi-ap-password>
+   uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
+   uart:~$ settings set golioth/psk <my-psk>
+   uart:~$ kernel reboot cold
 
 These credentials will be stored in the settings partition and will survive new
 application firmware flashed directly, or via OTA update.
