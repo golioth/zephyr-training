@@ -23,6 +23,8 @@ LOG_MODULE_DECLARE(golioth_iot, LOG_LEVEL_INF);
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/net/net_event.h>
 
+#include <zephyr/settings/settings.h>
+
 #include <qspi_if.h>
 
 #include "net_private.h"
@@ -172,13 +174,82 @@ static void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
 	}
 }
 
+/* From Golioth Common wifi.c */
+static uint8_t wifi_ssid[WIFI_SSID_MAX_LEN];
+static size_t wifi_ssid_len;
+static uint8_t wifi_psk[WIFI_PSK_MAX_LEN];
+static size_t wifi_psk_len;
+
+static int wifi_settings_get(const char *name, char *dst, int val_len_max)
+{
+	uint8_t *val;
+	size_t val_len;
+
+	if (!strcmp(name, "ssid")) {
+		val = wifi_ssid;
+		val_len = wifi_ssid_len;
+	} else if (!strcmp(name, "psk")) {
+		val = wifi_psk;
+		val_len = wifi_psk_len;
+	} else {
+		LOG_WRN("Unsupported key '%s'", name);
+		return -ENOENT;
+	}
+
+	if (val_len > val_len_max) {
+		LOG_ERR("Not enough space (%zu %d)", val_len, val_len_max);
+		return -ENOMEM;
+	}
+
+	memcpy(dst, val, val_len);
+
+	return val_len;
+}
+
+static int wifi_settings_set(const char *name, size_t len_rd,
+			     settings_read_cb read_cb, void *cb_arg)
+{
+	uint8_t *buffer;
+	size_t buffer_len;
+	size_t *ret_len;
+	ssize_t ret;
+
+	if (!strcmp(name, "ssid")) {
+		buffer = wifi_ssid;
+		buffer_len = sizeof(wifi_ssid);
+		ret_len = &wifi_ssid_len;
+	} else if (!strcmp(name, "psk")) {
+		buffer = wifi_psk;
+		buffer_len = sizeof(wifi_psk);
+		ret_len = &wifi_psk_len;
+	} else {
+		LOG_WRN("Unsupported key '%s'", name);
+		return -ENOENT;
+	}
+
+	ret = read_cb(cb_arg, buffer, buffer_len);
+	if (ret < 0) {
+		LOG_ERR("Failed to read value: %d", (int) ret);
+		return ret;
+	}
+
+	*ret_len = ret;
+
+	return 0;
+}
+
+SETTINGS_STATIC_HANDLER_DEFINE(wifi, "wifi",
+	IS_ENABLED(CONFIG_SETTINGS_RUNTIME) ? wifi_settings_get : NULL,
+	wifi_settings_set, NULL, NULL);
+/* End Golioth common wifi.c */
+
 static int __wifi_args_to_params(struct wifi_connect_req_params *params)
 {
 	params->timeout = SYS_FOREVER_MS;
 
 	/* SSID */
-	params->ssid = CONFIG_STA_SAMPLE_SSID;
-	params->ssid_length = strlen(params->ssid);
+	params->ssid = wifi_ssid;
+	params->ssid_length = wifi_ssid_len;
 
 #if defined(CONFIG_STA_KEY_MGMT_WPA2)
 	params->security = 1;
@@ -191,8 +262,8 @@ static int __wifi_args_to_params(struct wifi_connect_req_params *params)
 #endif
 
 #if !defined(CONFIG_STA_KEY_MGMT_NONE)
-	params->psk = CONFIG_STA_SAMPLE_PASSWORD;
-	params->psk_length = strlen(params->psk);
+	params->psk = wifi_psk;
+	params->psk_length = wifi_psk_len;
 #endif
 	params->channel = WIFI_CHANNEL_ANY;
 
