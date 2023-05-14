@@ -36,6 +36,8 @@ static const struct gpio_dt_spec button0 = GPIO_DT_SPEC_GET_OR(SW0_N, gpios, {0}
 static const struct gpio_dt_spec button1 = GPIO_DT_SPEC_GET_OR(SW1_N, gpios, {0});
 static struct gpio_callback button_cb_data;
 
+uint8_t _led_sel = 0;
+
 void wake_system_thread(void)
 {
 	k_wakeup(_system_thread);
@@ -51,30 +53,12 @@ static int selected_led_state_handler(struct golioth_req_rsp *rsp)
 	return 0;
 }
 
-void button_pressed(const struct device *dev, struct gpio_callback *cb,
-		    uint32_t pins)
-{
-	uint8_t led_sel;
+void update_lightdb_state_work_handler(struct k_work *work) {
 	char sbuf[32];
 
-	if (pins & BIT(button0.pin)) {
-		led_sel = 0;
-	} else if (pins & BIT(button1.pin)) {
-		led_sel = 1;
-	} else {
-		LOG_WRN("Ignoring unknown button press even: %d", pins);
-		return;
-	}
-
-	LOG_INF("Pins: %d", pins);
-
-	led_set_selected(led_sel);
-	led_wake_thread();
-
 	/* LED labels on board silk screen are +1 from LED Node definitions */
-	snprintk(sbuf, sizeof(sbuf), "\"LED%d\"", led_sel + 1);
+	snprintk(sbuf, sizeof(sbuf), "\"LED%d\"", _led_sel + 1);
 
-	printk("LightDB State: %s\n", sbuf);
 	int err = golioth_lightdb_set_cb(client, "selected_led",
 					 GOLIOTH_CONTENT_FORMAT_APP_JSON,
 					 sbuf, strlen(sbuf),
@@ -83,6 +67,32 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb,
 		LOG_WRN("Failed to set counter: %d", err);
 		return;
 	}
+}
+
+K_WORK_DEFINE(update_state_work, update_lightdb_state_work_handler);
+
+void button_pressed(const struct device *dev, struct gpio_callback *cb,
+		    uint32_t pins)
+{
+	if (pins & BIT(button0.pin)) {
+		_led_sel = 0;
+	} else if (pins & BIT(button1.pin)) {
+		_led_sel = 1;
+	} else {
+		LOG_WRN("Ignoring unknown button press even: %d", pins);
+		return;
+	}
+
+	LOG_INF("Pins: %d", pins);
+
+	led_set_selected(_led_sel);
+	led_wake_thread();
+
+	/*
+	 * Don't call Golioth APIs from an interrupt;
+	 * This worker will run on the system thread
+	 */
+	k_work_submit(&update_state_work);
 }
 
 enum golioth_settings_status on_setting(
