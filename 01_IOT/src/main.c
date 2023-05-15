@@ -17,7 +17,12 @@ LOG_MODULE_REGISTER(golioth_iot, LOG_LEVEL_DBG);
 
 #include "led_blink.h"
 #include "tem_sensor.h"
+
+#ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
 #include "wifi_util.h"
+#else
+#include <samples/common/net_connect.h>
+#endif
 
 static struct golioth_client *client = GOLIOTH_SYSTEM_CLIENT_GET();
 static int32_t _loop_delay_s = 5;
@@ -61,12 +66,15 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb,
 		return;
 	}
 
+	LOG_INF("Pins: %d", pins);
+
 	led_set_selected(led_sel);
 	led_wake_thread();
 
 	/* LED labels on board silk screen are +1 from LED Node definitions */
 	snprintk(sbuf, sizeof(sbuf), "\"LED%d\"", led_sel + 1);
 
+	printk("LightDB State: %s\n", sbuf);
 	int err = golioth_lightdb_set_cb(client, "selected_led",
 					 GOLIOTH_CONTENT_FORMAT_APP_JSON,
 					 sbuf, strlen(sbuf),
@@ -213,7 +221,13 @@ void main(void)
 	/* Buttons share the same port; this will add callback for both */
 	gpio_add_callback(button0.port, &button_cb_data);
 
+#ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
 	wifi_connect();
+#else
+	if (IS_ENABLED(CONFIG_GOLIOTH_SAMPLES_COMMON)) {
+		net_connect();
+	}
+#endif
 
 	golioth_rpc_register(client, "get_wifi_info", on_get_wifi_info, NULL);
 	golioth_settings_register_callback(client, on_setting);
