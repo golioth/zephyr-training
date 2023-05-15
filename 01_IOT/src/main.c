@@ -144,6 +144,31 @@ enum golioth_settings_status on_setting(
 	return GOLIOTH_SETTINGS_KEY_NOT_RECOGNIZED;
 }
 
+static enum golioth_rpc_status on_multiply(QCBORDecodeContext *request_params_array,
+					   QCBOREncodeContext *response_detail_map,
+					   void *callback_arg)
+{
+	double a, b;
+	double value;
+	QCBORError qerr;
+
+	QCBORDecode_GetDouble(request_params_array, &a);
+	QCBORDecode_GetDouble(request_params_array, &b);
+	qerr = QCBORDecode_GetError(request_params_array);
+	if (qerr != QCBOR_SUCCESS) {
+		LOG_ERR("Failed to decode array items: %d (%s)", qerr, qcbor_err_to_str(qerr));
+		return GOLIOTH_RPC_INVALID_ARGUMENT;
+	}
+
+	value = a * b;
+
+	LOG_DBG("%lf * %lf = %lf", a, b, value);
+
+	QCBOREncode_AddDoubleToMap(response_detail_map, "value", value);
+
+	return GOLIOTH_RPC_OK;
+}
+
 static enum golioth_rpc_status on_get_network_info(QCBORDecodeContext *request_params_array,
 						QCBOREncodeContext *response_detail_map,
 						void *callback_arg)
@@ -249,6 +274,7 @@ void main(void)
 #endif
 
 	golioth_rpc_register(client, "get_network_info", on_get_network_info, NULL);
+	golioth_rpc_register(client, "multiply", on_multiply, NULL);
 	golioth_settings_register_callback(client, on_setting);
 	client->on_connect = golioth_on_connect;
 	golioth_system_client_start();
