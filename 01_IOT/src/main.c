@@ -134,7 +134,7 @@ enum golioth_settings_status on_setting(
 	return GOLIOTH_SETTINGS_KEY_NOT_RECOGNIZED;
 }
 
-static enum golioth_rpc_status on_get_wifi_info(QCBORDecodeContext *request_params_array,
+static enum golioth_rpc_status on_get_network_info(QCBORDecodeContext *request_params_array,
 						QCBOREncodeContext *response_detail_map,
 						void *callback_arg)
 {
@@ -146,6 +146,7 @@ static enum golioth_rpc_status on_get_wifi_info(QCBORDecodeContext *request_para
 		return GOLIOTH_RPC_INVALID_ARGUMENT;
 	}
 
+#ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
 	struct wifi_iface_status w_status = { 0 };
 
 	cmd_wifi_status(&w_status);
@@ -179,6 +180,14 @@ static enum golioth_rpc_status on_get_wifi_info(QCBORDecodeContext *request_para
 		QCBOREncode_AddSZStringToMap(response_detail_map, "MFP", wifi_mfp_txt(w_status.mfp));
 		QCBOREncode_AddDoubleToMap(response_detail_map, "RSSI", w_status.rssi);
 	}
+
+#else
+	QCBOREncode_AddSZStringToMap(response_detail_map,
+				     "No Network Info",
+				     "Network reporting not implemented "
+				     "for this board");
+
+#endif
 
 	return GOLIOTH_RPC_OK;
 }
@@ -229,7 +238,7 @@ void main(void)
 	}
 #endif
 
-	golioth_rpc_register(client, "get_wifi_info", on_get_wifi_info, NULL);
+	golioth_rpc_register(client, "get_network_info", on_get_network_info, NULL);
 	golioth_settings_register_callback(client, on_setting);
 	client->on_connect = golioth_on_connect;
 	golioth_system_client_start();

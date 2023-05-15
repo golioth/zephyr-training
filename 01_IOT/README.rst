@@ -144,15 +144,15 @@ following keys are used for these settings:
 * Sensor frequency (seconds): `LOOP_DELAY_S`
 * Blink frequency (milliseconds): `BLINK_DELAY_MS`
 
-Reporting WiFi Connection Information
+Reporting Network Connection Information
 =====================================
 
-A remote procedure call can be used to return information about the WiFi network
-to which the device is currently connected:
+A remote procedure call can be used to return information about the network to
+which the device is currently connected:
 
-* `get_wifi_info`
+* `get_network_info`
 
-.. image:: img/rpc_wifi-info.jpg
+.. image:: img/rpc_network_info.jpg
 
 .. _Golioth Cloud: https://golioth.io/
 .. _Zephyr: https://www.zephyrproject.org/
