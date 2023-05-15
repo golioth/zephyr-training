@@ -7,9 +7,10 @@ project(golioth_iot)
 
 target_include_directories(app PUBLIC ${ZEPHYR_BASE}/subsys/net/ip)
 
+zephyr_library_sources_ifdef(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP src/wifi_util.c)
+
 target_sources(app PRIVATE
 	src/main.c
 	src/led_blink.c
 	src/tem_sensor.c
-	src/wifi_util.c
 )
