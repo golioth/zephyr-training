@@ -9,6 +9,8 @@
 
 #include <qcbor/qcbor.h>
 
-int add_network_info_to_map(QCBOREncodeContext *response_detail_map);
+int network_info_init(void);
+int network_info_add_to_map(QCBOREncodeContext *response_detail_map);
+int network_info_log(void);
 
 #endif
