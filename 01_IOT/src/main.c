@@ -18,7 +18,6 @@ LOG_MODULE_REGISTER(golioth_iot, LOG_LEVEL_DBG);
 #include "led_blink.h"
 #include "tem_sensor.h"
 #include "network_info.h"
-#include <modem/modem_info.h>
 
 #ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
 #include "wifi_util.h"
@@ -183,7 +182,7 @@ static enum golioth_rpc_status on_get_network_info(QCBORDecodeContext *request_p
 		return GOLIOTH_RPC_INVALID_ARGUMENT;
 	}
 
-	add_network_info_to_map(response_detail_map);
+	network_info_add_to_map(response_detail_map);
 
 	return GOLIOTH_RPC_OK;
 }
@@ -242,10 +241,7 @@ void main(void)
 
 	k_sem_take(&golioth_connected, K_FOREVER);
 
-	err = modem_info_init();
-	if (err) {
-		LOG_ERR("Failed to initialize modem info: %d", err);
-	}
+	network_info_init();
 
 	while (true) {
 		LOG_INF("Sending hello! %d", counter);
