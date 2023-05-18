@@ -12,5 +12,6 @@ zephyr_library_sources_ifdef(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP src/wifi_util
 target_sources(app PRIVATE
 	src/main.c
 	src/led_blink.c
+	src/network_info.c
 	src/tem_sensor.c
 )

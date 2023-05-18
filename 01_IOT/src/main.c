@@ -17,6 +17,8 @@ LOG_MODULE_REGISTER(golioth_iot, LOG_LEVEL_DBG);
 
 #include "led_blink.h"
 #include "tem_sensor.h"
+#include "network_info.h"
+#include <modem/modem_info.h>
 
 #ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
 #include "wifi_util.h"
@@ -181,48 +183,7 @@ static enum golioth_rpc_status on_get_network_info(QCBORDecodeContext *request_p
 		return GOLIOTH_RPC_INVALID_ARGUMENT;
 	}
 
-#ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
-	struct wifi_iface_status w_status = { 0 };
-
-	cmd_wifi_status(&w_status);
-
-	QCBOREncode_AddSZStringToMap(response_detail_map, "State", wifi_state_txt(w_status.state));
-
-	if (w_status.state >= WIFI_STATE_ASSOCIATED) {
-		uint8_t mac_string_buf[sizeof("xx:xx:xx:xx:xx:xx")];
-		QCBOREncode_AddSZStringToMap(response_detail_map,
-					     "Interface Mode",
-					     wifi_mode_txt(w_status.iface_mode));
-		QCBOREncode_AddSZStringToMap(response_detail_map,
-					     "Link Mode",
-					     wifi_link_mode_txt(w_status.link_mode));
-		QCBOREncode_AddSZStringToMap(response_detail_map,
-					     "SSID", w_status.ssid);
-		QCBOREncode_AddSZStringToMap(response_detail_map,
-					     "BSSID",
-					     net_sprint_ll_addr_buf(w_status.bssid,
-								    WIFI_MAC_ADDR_LEN,
-								    mac_string_buf,
-								    sizeof(mac_string_buf))
-					     );
-		QCBOREncode_AddSZStringToMap(response_detail_map, "Band",
-					     wifi_band_txt(w_status.band));
-		QCBOREncode_AddDoubleToMap(response_detail_map,
-					   "Channel", w_status.channel);
-		QCBOREncode_AddSZStringToMap(response_detail_map,
-					     "Security",
-					     wifi_security_txt(w_status.security));
-		QCBOREncode_AddSZStringToMap(response_detail_map, "MFP", wifi_mfp_txt(w_status.mfp));
-		QCBOREncode_AddDoubleToMap(response_detail_map, "RSSI", w_status.rssi);
-	}
-
-#else
-	QCBOREncode_AddSZStringToMap(response_detail_map,
-				     "No Network Info",
-				     "Network reporting not implemented "
-				     "for this board");
-
-#endif
+	add_network_info_to_map(response_detail_map);
 
 	return GOLIOTH_RPC_OK;
 }
@@ -280,6 +241,11 @@ void main(void)
 	golioth_system_client_start();
 
 	k_sem_take(&golioth_connected, K_FOREVER);
+
+	err = modem_info_init();
+	if (err) {
+		LOG_ERR("Failed to initialize modem info: %d", err);
+	}
 
 	while (true) {
 		LOG_INF("Sending hello! %d", counter);
