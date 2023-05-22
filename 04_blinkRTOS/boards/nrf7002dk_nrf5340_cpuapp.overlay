@@ -1,0 +1,15 @@
+/ {
+	aliases {
+		training-led = &ledn2;
+	};
+
+
+	trainingleds: tled {
+		compatible = "gpio-leds";
+
+		ledn2: led_number_2 {
+			gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
+	       };
+	};
+};
+
