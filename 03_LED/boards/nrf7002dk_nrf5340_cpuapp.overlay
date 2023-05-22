@@ -1,0 +1,12 @@
+/ {
+	aliases {
+		mynode = &nodelabel;
+	};
+
+
+	nodelabel: nodepath {
+		compatible = "zephyr,fake-eeprom";
+		size = <0>;
+	};
+};
+
