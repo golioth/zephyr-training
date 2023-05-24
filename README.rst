@@ -1,12 +1,12 @@
-Golioth Zephyr Training: nRF7002-DK
-###################################
+Golioth Zephyr Training
+#######################
 
 Overview
 ********
 
 This repository contains the code for Golioth's self-guided Zephyr training
-using the nRF7002-DK. Please visit `Golioth's Developer Training Docs
-<https://training.golioth.io>`_ to learn Zephyr with us.
+using the nRF7002-DK or the nRF9160-DK. Please visit `Golioth's Developer
+Training Docs <https://training.golioth.io>`_ to learn Zephyr with us.
 
 Local set up
 ************
@@ -20,9 +20,9 @@ Install the Python virtual environment (recommended)
 .. code-block:: console
 
    cd ~
-   mkdir zephyr-training-nrf7002dk
-   python -m venv zephyr-training-nrf7002dk/.venv
-   source zephyr-training-nrf7002dk/.venv/bin/activate
+   mkdir zephyr-training
+   python -m venv zephyr-training/.venv
+   source zephyr-training/.venv/bin/activate
    pip install wheel west
 
 Use ``west`` to initialize and install
@@ -30,8 +30,8 @@ Use ``west`` to initialize and install
 
 .. code-block:: console
 
-   cd ~/zephyr-training-nrf7002dk
-   west init -m git@github.com:golioth/zephyr-training-nrf7002dk.git .
+   cd ~/zephyr-training
+   west init -m git@github.com:golioth/zephyr-training.git .
    west update
    west zephyr-export
    pip install -r deps/zephyr/scripts/requirements.txt
@@ -68,12 +68,16 @@ section on this in the prj.conf file. The default is WPA2.
 .. code-block:: console
 
    # Enable the Python virtual environment
-   $ cd ~/zephyr-training-nrf7002dk
+   $ cd ~/zephyr-training
    $ source .venv/bin/activate
 
    # Build the application
    $ (.venv) cd app
+   # Choose one of the following build commands:
+   # For nRF7002dk
    $ (.venv) west build -b nrf7002dk_nrf5340_cpuapp 01_IOT
+   # For nRF9160dk
+   $ (.venv) west build -b nrf9160dk_nrf9160_ns 01_IOT
 
    # Flash the binary to your device
    $ (.venv) west flash

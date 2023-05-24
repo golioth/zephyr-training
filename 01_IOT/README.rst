@@ -13,11 +13,14 @@ code you will learn about:
    * Receiving remote logging information from the device
    * Using remote procedure call (RPC) to return current WiFi connection info
 
-Hardware: Nordic nRF7002-DK
-***************************
+Hardware
+********
 
-This demonstrates how to interact with the `Golioth Cloud`_ using `Zephyr`_ on the
-`Nordic nRF7002 Development Kit`_.
+This demonstrates how to interact with the `Golioth Cloud`_ using `Zephyr`_ on
+any of the following boards:
+
+* `Nordic nRF7002 Development Kit`_.
+* `Nordic nRF9160 Development Kit`_.
 
 
 Build Instructions
@@ -39,13 +42,17 @@ From the root directory of this repository, build using the following command:
 
 .. code-block:: bash
 
+   $ # Building for nRF7002dk
    $ (.venv) west build -b nrf7002dk_nrf5340_cpuapp 01_IOT
+
+   $ # Building for nRF9160dk
+   $ (.venv) west build -b nrf9160dk_nrf9160_ns 01_IOT
 
 Flash project
 =============
 
-Plug the nRF7002-DK into the USB port on the short edge of the board. (Do not
-use the USB port labelled `nRF USB`.) Run the following command:
+Connect your computer to the board via USB. (On the nRF7002dk, do not use the
+USB port labelled `nRF USB`.) Run the following command:
 
 .. code-block:: bash
 
@@ -54,14 +61,32 @@ use the USB port labelled `nRF USB`.) Run the following command:
 Add credentials
 ===============
 
-Two serial ports will enumerate on your system. Use a serial terminal program to
-connect to the higher numbered serial port using 115200 8N1 as the settings. Use
-the following syntax to store your WiFi and Golioth credentials on the device:
+Use a serial terminal program to connect to the device using 115200 8N1 as the
+settings.
+
+nRF7002dk
+---------
+
+* Use the **highest** numbered port
+* Use the following syntax to store your WiFi and Golioth credentials on the
+  device:
 
 .. code-block:: bash
 
    uart:~$ settings set wifi/ssid <my-wifi-ap-ssid>
    uart:~$ settings set wifi/psk <my-wifi-ap-password>
+   uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
+   uart:~$ settings set golioth/psk <my-psk>
+   uart:~$ kernel reboot cold
+
+nRF9160dk
+---------
+
+* Use the **lowest** numbered port
+* Use the following syntax to store your Golioth credentials on the device:
+
+.. code-block:: bash
+
    uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
    uart:~$ settings set golioth/psk <my-psk>
    uart:~$ kernel reboot cold
@@ -157,4 +182,5 @@ which the device is currently connected:
 .. _Golioth Cloud: https://golioth.io/
 .. _Zephyr: https://www.zephyrproject.org/
 .. _Nordic nRF7002 Development Kit: https://www.nordicsemi.com/Products/Development-hardware/nRF7002-DK
+.. _Nordic nRF9160 Development Kit: https://www.nordicsemi.com/Products/Development-hardware/nRF9160-DK
 

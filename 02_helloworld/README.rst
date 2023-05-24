@@ -42,8 +42,8 @@ From the root directory of this repository, build using the following command:
 Flash project
 =============
 
-Plug the nRF7002-DK into the USB port on the short edge of the board. (Do not
-use the USB port labelled ``nRF USB``.) Run the following command:
+Connect your computer to the board via USB. (On the nRF7002dk, do not use the
+USB port labelled `nRF USB`.) Run the following command:
 
 .. code-block:: bash
 
