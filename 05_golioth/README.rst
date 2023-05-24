@@ -46,8 +46,8 @@ From the root directory of this repository, build using the following command:
 Flash project
 =============
 
-Plug the nRF7002-DK into the USB port on the short edge of the board. (Do not
-use the USB port labelled ``nRF USB``.) Run the following command:
+Connect your computer to the board via USB. (On the nRF7002dk, do not use the
+USB port labelled `nRF USB`.) Run the following command:
 
 .. code-block:: bash
 
@@ -56,14 +56,32 @@ use the USB port labelled ``nRF USB``.) Run the following command:
 Add credentials
 ===============
 
-Two serial ports will enumerate on your system. Use a serial terminal program to
-connect to the higher numbered serial port using 115200 8N1 as the settings. Use
-the following syntax to store your WiFi and Golioth credentials on the device:
+Use a serial terminal program to connect to the device using 115200 8N1 as the
+settings.
+
+nRF7002dk
+---------
+
+* Use the **highest** numbered port
+* Use the following syntax to store your WiFi and Golioth credentials on the
+  device:
 
 .. code-block:: bash
 
    uart:~$ settings set wifi/ssid <my-wifi-ap-ssid>
    uart:~$ settings set wifi/psk <my-wifi-ap-password>
+   uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
+   uart:~$ settings set golioth/psk <my-psk>
+   uart:~$ kernel reboot cold
+
+nRF9160dk
+---------
+
+* Use the **lowest** numbered port
+* Use the following syntax to store your Golioth credentials on the device:
+
+.. code-block:: bash
+
    uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
    uart:~$ settings set golioth/psk <my-psk>
    uart:~$ kernel reboot cold
