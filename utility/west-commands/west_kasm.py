@@ -38,22 +38,25 @@ class KASM(WestCommand):
 
         # Add some example options using the standard argparse module API.
         parser.add_argument('command', choices=['download'],
-                help='merge binaries and move to kasm download folder')
+                help='rename binary and move to kasm download folder')
 
         parser.add_argument('-d', '--build-dir', default='build', help='build directory to use')
         parser.add_argument('-o', '--output-dir', default='~/Desktop/Downloads', help='output directory to use')
 
         return parser           # gets stored as self.parser
 
-    def get_cmake_src_dir(self, build_dir):
+    def get_cmake_values(self, build_dir):
+        return_vals = { "cmake_src_dir": None, "board_name": None }
         with open(os.path.join(build_dir, 'CMakeCache.txt')) as f:
             cmake_lines = f.readlines()
         for line in cmake_lines:
             if line.startswith("APPLICATION_SOURCE_DIR:PATH="):
                 app_path = line.split("APPLICATION_SOURCE_DIR:PATH=")[1]
-                folder = os.path.basename(app_path).strip()
-                return folder
-        return "unknown"
+                return_vals["cmake_src_dir"] = os.path.basename(app_path).strip()
+            elif line.startswith("BOARD:STRING="):
+                board_string = line.split("BOARD:STRING=")[1].strip()
+                return_vals["board_name"] = board_string
+        return return_vals
 
     def do_run(self, args, unknown_args):
         # This gets called when the user runs the command, e.g.:
@@ -71,15 +74,25 @@ class KASM(WestCommand):
             if not os.path.exists(output_dir):
                 log.die('cannot find output directory: ', output_dir)
 
-            app_name = self.get_cmake_src_dir(build_dir)
-            format_filename = 'zephyr_{}_%H%M%S.hex'.format(app_name)
+            cmake_vals = self.get_cmake_values(build_dir)
+            board_name = cmake_vals["board_name"]
+
+            if board_name == "nrf7002dk_nrf5340_cpuapp":
+                bin_name = 'zephyr.hex'
+            elif board_name == "nrf9160dk_nrf9160_ns":
+                bin_name = 'merged.hex'
+            else:
+                log.die("Don't know which binary to move for this board:", board_name)
+
+            app_name = cmake_vals["cmake_src_dir"]
+            format_filename = '{}_{}_%H%M%S.hex'.format(board_name.split('_')[0], app_name)
 
             new_filename = time.strftime(format_filename, time.localtime())
             download_file_path=os.path.join(output_dir, new_filename)
-            zephyrhex_path=os.path.join(build_dir, 'zephyr/zephyr.hex')
+            zephyrhex_path=os.path.join(build_dir, 'zephyr', bin_name)
 
             if not os.path.exists(zephyrhex_path):
-                log.die('cannot find zephyr.hex: ', zephyrhex_path)
+                log.die('cannot find binary: ', zephyrhex_path)
 
             try:
                 shutil.copyfile(zephyrhex_path, download_file_path)
