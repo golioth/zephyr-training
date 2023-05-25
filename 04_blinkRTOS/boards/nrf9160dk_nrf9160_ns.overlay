@@ -8,7 +8,7 @@
 		compatible = "gpio-leds";
 
 		ledn2: led_number_2 {
-			gpios = <&gpio0 3 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
 	       };
 	};
 };
