@@ -1,12 +1,16 @@
 / {
 	aliases {
-		mynode = &nodelabel;
+		alias-name = &subnode_nodelabel;
 	};
 
 
-	nodelabel: nodepath {
+	child-node-path {
 		compatible = "zephyr,fake-eeprom";
-		size = <0>;
+
+		size = <0>; /* property required by zephyr,fake-eprom binding */
+
+		subnode_nodelabel: subnode-path {
+			foo = <3>;
+		};
 	};
 };
-
