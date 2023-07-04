@@ -26,6 +26,11 @@ manifest:
           - sdk-hostap
           - segger
           - tinycrypt
+    - name: zephyr-network-info
+      path: app/01_IOT/src/network_info
+      revision: cc89936517900cf9142af48e06188240b99cd4b9
+      url: https://github.com/golioth/zephyr-network-info
+
   self:
     path: app
     west-commands: utility/west-commands/west-commands.yml
