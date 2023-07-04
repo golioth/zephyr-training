@@ -1,5 +1,6 @@
 build*/
 .vscode
 .cache
-credentials.conf
+network_info/
 __pycache__/
+
