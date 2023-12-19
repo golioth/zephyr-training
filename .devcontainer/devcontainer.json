@@ -1,0 +1,6 @@
+{
+  "image": "golioth/golioth-zephyr-base:0.16.3-SDK-v0",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/app,type=bind",
+  "workspaceFolder": "/workspace",
+  "onCreateCommand": "west init -l app/ && west update --narrow -o=--depth=1 && west zephyr-export && pip install -r deps/zephyr/scripts/requirements.txt"
+}
