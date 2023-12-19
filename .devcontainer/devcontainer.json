@@ -3,5 +3,15 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/app,type=bind",
   "workspaceFolder": "/workspace",
   "onCreateCommand": "west init -l app/ && west update && west zephyr-export && pip install -r deps/zephyr/scripts/requirements.txt",
-  "remoteEnv": { "LC_ALL": "C" }
+  "remoteEnv": { "LC_ALL": "C" },
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": [
+        "ms-vscode.cpptools-extension-pack",
+        "nordic-semiconductor.nrf-devicetree",
+        "nordic-semiconductor.nrf-kconfig"
+      ]
+    }
+  }
 }
