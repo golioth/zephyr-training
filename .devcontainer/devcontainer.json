@@ -8,8 +8,10 @@
     "vscode": {
       "settings": {
         "cmake.configureOnOpen": false,
+        "cmake.showOptionsMovedNotification": false,
         "C_Cpp.default.compilerPath": "/opt/toolchains/zephyr-sdk-0.16.3/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc",
-        "C_Cpp.default.compileCommands": "/workspace/app/build/compile_commands.json"
+        "C_Cpp.default.compileCommands": "/workspace/app/build/compile_commands.json",
+        "git.autofetch": false
       },
       "extensions": [
         "ms-vscode.cpptools-extension-pack",
