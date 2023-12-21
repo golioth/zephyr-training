@@ -1,7 +1,7 @@
 west-commands:
-  - file: utility/west-commands/west_kasm.py
+  - file: utility/west-commands/west_download.py
     commands:
-      - name: kasm
-        class: KASM
-        help: helper comand when using a kasm container
+      - name: download
+        class: Download
+        help: helper command when using Codespaces
 
