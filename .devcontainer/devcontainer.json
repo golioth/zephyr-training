@@ -2,7 +2,7 @@
   "image": "golioth/golioth-zephyr-base:0.16.3-SDK-v0",
   "workspaceMount": "source=${localWorkspaceFolder},target=/zephyr-training/app,type=bind",
   "workspaceFolder": "/zephyr-training",
-  "onCreateCommand": "west init -l app && west update && west zephyr-export && pip install -r deps/zephyr/scripts/requirements.txt && west completion bash > $HOME/west-completion.bash && echo 'source $HOME/west-completion.bash' >> $HOME/.bashrc",
+  "onCreateCommand": "west init -l app && west update && west zephyr-export && pip install -r deps/zephyr/scripts/requirements.txt && echo \"alias ll='ls -lah'\" >> $HOME/.bashrc && west completion bash > $HOME/west-completion.bash && echo 'source $HOME/west-completion.bash' >> $HOME/.bashrc",
   "remoteEnv": { "LC_ALL": "C" },
   "customizations": {
     "vscode": {
