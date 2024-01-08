@@ -9,7 +9,7 @@ from west import log                   # use this for user output
 
 import os, time, shutil
 
-DEFAULT_DOWNLOAD_DIR = '/workspace/Downloads'
+DEFAULT_DOWNLOAD_DIR = '/zephyr-training/Downloads'
 
 class Download(WestCommand):
 
