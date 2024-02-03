@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Golioth, Inc.
+ * Copyright (c) 2023-2024 Golioth, Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,25 +7,33 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(golioth_iot, LOG_LEVEL_DBG);
 
-#include <net/golioth/settings.h>
-#include <net/golioth/system_client.h>
-#include <qcbor/qcbor.h>
-#include <qcbor/qcbor_spiffy_decode.h>
+#include <golioth/client.h>
+#include <golioth/lightdb_state.h>
+#include <golioth/rpc.h>
+#include <golioth/settings.h>
+#include <golioth/stream.h>
+#include <samples/common/sample_credentials.h>
+
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/net/coap.h>
 
 #include "led_blink.h"
 #include "tem_sensor.h"
-#include "network_info.h"
+#include <network_info.h>
 
 #ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
-#include "wifi_util.h"
+#include <wifi_util.h>
 #else
 #include <samples/common/net_connect.h>
 #endif
 
-static struct golioth_client *client = GOLIOTH_SYSTEM_CLIENT_GET();
+#define LOOP_DELAY_S_MIN 1
+#define LOOP_DELAY_S_MAX 100
+#define BLINK_DELAY_MS_MIN 200
+#define BLINK_DELAY_MS_MAX 2000
+
+struct golioth_client *client;
 static int32_t _loop_delay_s = 5;
 static k_tid_t _system_thread = 0;
 
@@ -44,28 +52,27 @@ void wake_system_thread(void)
 	k_wakeup(_system_thread);
 }
 
-static int selected_led_state_handler(struct golioth_req_rsp *rsp)
+static void selected_led_state_handler(struct golioth_client *client,
+				       const struct golioth_response *response,
+				       const char *path,
+				       void *arg)
 {
-	if (rsp->err) {
-		LOG_WRN("Failed to set selected LED state on Golioth: %d", rsp->err);
-		return rsp->err;
+	if (response->status != GOLIOTH_OK)
+	{
+		LOG_WRN("Failed to set selected LED state on Golioth: %d", response->status);
 	}
-
-	return 0;
 }
 
 void update_lightdb_state_work_handler(struct k_work *work) {
-	char sbuf[32];
-
 	/* LED labels on board silk screen are +1 from LED Node definitions */
-	snprintk(sbuf, sizeof(sbuf), "\"LED%d\"", _led_sel + 1);
-
-	int err = golioth_lightdb_set_cb(client, "selected_led",
-					 GOLIOTH_CONTENT_FORMAT_APP_JSON,
-					 sbuf, strlen(sbuf),
-					 selected_led_state_handler, NULL);
+	int err = golioth_lightdb_set_string_async(client,
+						   "selected_led",
+						   _led_sel ? "LED1" : "LED0",
+						   4,
+						   selected_led_state_handler,
+						   NULL);
 	if (err) {
-		LOG_WRN("Failed to set counter: %d", err);
+		LOG_WRN("Failed to set selected_led: %d", err);
 		return;
 	}
 }
@@ -96,68 +103,34 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb,
 	k_work_submit(&update_state_work);
 }
 
-enum golioth_settings_status on_setting(
-		const char *key,
-		const struct golioth_settings_value *value)
+static enum golioth_settings_status on_loop_delay_setting(int32_t new_value, void *arg)
 {
-	LOG_DBG("Received setting: key = %s, type = %d", key, value->type);
-	if (strcmp(key, "LOOP_DELAY_S") == 0) {
-		/* This setting is expected to be numeric, return an error if it's not */
-		if (value->type != GOLIOTH_SETTINGS_VALUE_TYPE_INT64) {
-			return GOLIOTH_SETTINGS_VALUE_FORMAT_NOT_VALID;
-		}
-
-		/* This setting must be in range [1, 100], return an error if it's not */
-		if (value->i64 < 1 || value->i64 > 100) {
-			return GOLIOTH_SETTINGS_VALUE_OUTSIDE_RANGE;
-		}
-
-		/* Setting has passed all checks, so apply it to the loop delay */
-		_loop_delay_s = (int32_t)value->i64;
-		LOG_INF("Set loop delay to %d seconds", _loop_delay_s);
-
-		wake_system_thread();
-
-		return GOLIOTH_SETTINGS_SUCCESS;
-	}
-
-	if (strcmp(key, "BLINK_DELAY_MS") == 0) {
-		/* This setting is expected to be numeric, return an error if it's not */
-		if (value->type != GOLIOTH_SETTINGS_VALUE_TYPE_INT64) {
-			return GOLIOTH_SETTINGS_VALUE_FORMAT_NOT_VALID;
-		}
-
-		/* This setting must be in range [100, 2000], return an error if it's not */
-		if (value->i64 < 100 || value->i64 > 2000) {
-			LOG_ERR("Bounding error (100 < BLINK_DELAY_MS < 10000): %lld", value->i64);
-			return GOLIOTH_SETTINGS_VALUE_OUTSIDE_RANGE;
-		}
-
-		/* Setting has passed all checks, so apply it to the loop delay */
-		led_set_delay((uint32_t)value->i64);
-		LOG_INF("Set blink delay to %lld milliseconds", value->i64);
-		led_wake_thread();
-
-		return GOLIOTH_SETTINGS_SUCCESS;
-	}
-
-	/* If the setting is not recognized, we should return an error */
-	return GOLIOTH_SETTINGS_KEY_NOT_RECOGNIZED;
+	LOG_INF("Setting loop delay to %d s", new_value);
+	_loop_delay_s = new_value;
+	return GOLIOTH_SETTINGS_SUCCESS;
 }
 
-static enum golioth_rpc_status on_multiply(QCBORDecodeContext *request_params_array,
-					   QCBOREncodeContext *response_detail_map,
-					   void *callback_arg)
+static enum golioth_settings_status on_blink_delay_setting(int32_t new_value, void *arg)
+{
+	led_set_delay(new_value);
+	LOG_INF("Set blink delay to %d milliseconds", new_value);
+	led_wake_thread();
+	return GOLIOTH_SETTINGS_SUCCESS;
+}
+
+static enum golioth_rpc_status on_multiply(zcbor_state_t *request_params_array,
+                                           zcbor_state_t *response_detail_map,
+                                           void *callback_arg)
 {
 	double a, b;
 	double value;
-	QCBORError qerr;
+	bool ok;
 
-	QCBORDecode_GetDouble(request_params_array, &a);
-	QCBORDecode_GetDouble(request_params_array, &b);
-	qerr = QCBORDecode_GetError(request_params_array);
-	if (qerr != QCBOR_SUCCESS) {
-		LOG_ERR("Failed to decode array items: %d (%s)", qerr, qcbor_err_to_str(qerr));
+	ok = zcbor_float_decode(request_params_array, &a) &&
+	     zcbor_float_decode(request_params_array, &b);
+	if (!ok)
+	{
+		LOG_ERR("Failed to decode array items");
 		return GOLIOTH_RPC_INVALID_ARGUMENT;
 	}
 
@@ -165,47 +138,55 @@ static enum golioth_rpc_status on_multiply(QCBORDecodeContext *request_params_ar
 
 	LOG_DBG("%lf * %lf = %lf", a, b, value);
 
-	QCBOREncode_AddDoubleToMap(response_detail_map, "value", value);
+	ok = zcbor_tstr_put_lit(response_detail_map, "value") &&
+	     zcbor_float64_put(response_detail_map, value);
+	if (!ok)
+	{
+		LOG_ERR("Failed to encode value");
+		return GOLIOTH_RPC_RESOURCE_EXHAUSTED;
+	}
 
 	return GOLIOTH_RPC_OK;
 }
 
-static enum golioth_rpc_status on_get_network_info(QCBORDecodeContext *request_params_array,
-						QCBOREncodeContext *response_detail_map,
-						void *callback_arg)
+static enum golioth_rpc_status on_get_network_info(zcbor_state_t *request_params_array,
+						   zcbor_state_t *response_detail_map,
+						   void *callback_arg)
 {
-	QCBORError qerr;
-
-	qerr = QCBORDecode_GetError(request_params_array);
-	if (qerr != QCBOR_SUCCESS) {
-		LOG_ERR("Failed to decode array items: %d (%s)", qerr, qcbor_err_to_str(qerr));
-		return GOLIOTH_RPC_INVALID_ARGUMENT;
-	}
-
 	network_info_add_to_map(response_detail_map);
 
 	return GOLIOTH_RPC_OK;
 }
 
-static void golioth_on_connect(struct golioth_client *client)
+static void on_client_event(struct golioth_client *client,
+			    enum golioth_client_event event,
+			    void *arg)
 {
-	k_sem_give(&golioth_connected);
-
-	golioth_rpc_observe(client);
-	golioth_settings_observe(client);
+	bool is_connected = (event == GOLIOTH_CLIENT_EVENT_CONNECTED);
+	if (is_connected)
+	{
+		k_sem_give(&golioth_connected);
+	}
+	LOG_INF("Golioth client %s", is_connected ? "connected" : "disconnected");
 }
 
-static int temperature_push_handler(struct golioth_req_rsp *rsp)
+static void temperature_push_handler(struct golioth_client *client,
+				     const struct golioth_response *response,
+				     const char *path,
+				     void *arg)
 {
-	if (rsp->err) {
-		LOG_WRN("Failed to push temperature: %d", rsp->err);
-		return rsp->err;
+	if (response->status != GOLIOTH_OK)
+	{
+		LOG_WRN("Failed to push temperature: %d", response->status);
+		return;
 	}
 
-	return 0;
+	LOG_DBG("Temperature successfully pushed");
+
+	return;
 }
 
-void main(void)
+int main(void)
 {
 	struct sensor_value temperature;
 	int counter = 0;
@@ -228,41 +209,44 @@ void main(void)
 #ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
 	wifi_connect();
 #else
-	if (IS_ENABLED(CONFIG_GOLIOTH_SAMPLES_COMMON)) {
+	if (IS_ENABLED(CONFIG_GOLIOTH_SAMPLE_COMMON)) {
 		net_connect();
 	}
 #endif
 
-	golioth_rpc_register(client, "get_network_info", on_get_network_info, NULL);
-	golioth_rpc_register(client, "multiply", on_multiply, NULL);
-	golioth_settings_register_callback(client, on_setting);
-	client->on_connect = golioth_on_connect;
-	golioth_system_client_start();
+	const struct golioth_client_config *client_config = golioth_sample_credentials_get();
 
+	client = golioth_client_create(client_config);
+	struct golioth_rpc *rpc = golioth_rpc_init(client);
+	struct golioth_settings *settings = golioth_settings_init(client);
+
+	golioth_client_register_event_callback(client, on_client_event, NULL);
 	k_sem_take(&golioth_connected, K_FOREVER);
 
-	network_info_init();
+	golioth_rpc_register(rpc, "get_network_info", on_get_network_info, NULL);
+	golioth_rpc_register(rpc, "multiply", on_multiply, NULL);
+	golioth_settings_register_int_with_range(settings, "LOOP_DELAY_S", LOOP_DELAY_S_MIN, LOOP_DELAY_S_MAX, on_loop_delay_setting, NULL);
+	golioth_settings_register_int_with_range(settings, "BLINK_DELAY_MS", BLINK_DELAY_MS_MIN, BLINK_DELAY_MS_MAX, on_blink_delay_setting, NULL);
+
 
 	while (true) {
-		LOG_INF("Sending hello! %d", counter);
-
-		err = golioth_send_hello(client);
-		if (err) {
-			LOG_WRN("Failed to send hello!");
-		}
+		LOG_INF("Hello Golioth! %d", counter);
 
 		get_temperature(&temperature);
 		snprintk(sbuf, sizeof(sbuf), "%d.%06d",
 				temperature.val1, temperature.val2);
 		LOG_INF("Streaming Temperature to Golioth: %s", sbuf);
 
-		err = golioth_stream_push_cb(client, "temp",
-					     GOLIOTH_CONTENT_FORMAT_APP_JSON,
-					     sbuf, strlen(sbuf),
-					     temperature_push_handler, NULL);
+		err = golioth_stream_set_async(client,
+					       "temp",
+					       GOLIOTH_CONTENT_TYPE_JSON,
+					       sbuf,
+					       strlen(sbuf),
+					       temperature_push_handler,
+					       NULL);
+
 		if (err) {
 			LOG_WRN("Failed to push temperature: %d", err);
-			return;
 		}
 
 		++counter;

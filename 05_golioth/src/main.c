@@ -11,11 +11,13 @@ LOG_MODULE_REGISTER(add_golioth, LOG_LEVEL_DBG);
 #include <zephyr/drivers/gpio.h>
 
 /* Includes for connectivity */
-#include <net/golioth/system_client.h>
 #include <zephyr/net/coap.h>
 
+/* Helper functions for passing credentials to Golioth client */
+#include <samples/common/sample_credentials.h>
+
 #ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
-#include "wifi_util.h"
+#include <wifi_util.h>
 #else
 #include <samples/common/net_connect.h>
 #endif
@@ -63,17 +65,17 @@ K_THREAD_DEFINE(my_thread, 1024,
                 K_LOWEST_APPLICATION_THREAD_PRIO, 0, 0);
 
 /* Main function */
-void main(void)
+int main(void)
 {
 	int ret;
 
 	if (!device_is_ready(led1.port)) {
-		return;
+		return -EIO;
 	}
 
 	ret = gpio_pin_configure_dt(&led1, GPIO_OUTPUT_ACTIVE);
 	if (ret < 0) {
-		return;
+		return -EIO;
 	}
 
 	/* Start timer-based LED blinker */
@@ -83,7 +85,7 @@ void main(void)
 #ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
 	wifi_connect();
 #else
-	if (IS_ENABLED(CONFIG_GOLIOTH_SAMPLES_COMMON)) {
+	if (IS_ENABLED(CONFIG_GOLIOTH_SAMPLE_COMMON)) {
 		net_connect();
 	}
 #endif

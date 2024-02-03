@@ -3,9 +3,10 @@ manifest:
 
   projects:
     - name: golioth
-      path: modules/lib/golioth
-      revision: f01824d8f0943463ee07cb493103a63221599c79
-      url: https://github.com/golioth/golioth-zephyr-sdk
+      path: modules/lib/golioth-firmware-sdk
+      revision: 528b63c10fa042f34071d893b3c2b9a3e80c28b9
+      url: https://github.com/golioth/golioth-firmware-sdk
+      submodules: true
       west-commands: scripts/west-commands.yml
       import:
         file: west-ncs.yml
@@ -15,17 +16,24 @@ manifest:
           - zephyr
           - cmsis
           - hal_nordic
+          - hostap
           - mbedtls
           - mbedtls-nrf
           - mcuboot
           - net-tools
           - nrfxlib
-          - tfm-mcuboot
-          - trusted-firmware-m
           - qcbor
-          - sdk-hostap
           - segger
+          - tfm-mcuboot
           - tinycrypt
+          - trusted-firmware-m
+          - zcbor
+
+    - name: zephyr-network-info
+      path: deps/modules/lib/network-info
+      revision: v1.1.0
+      url: https://github.com/golioth/zephyr-network-info
+
   self:
     path: app
     west-commands: utility/west-commands/west-commands.yml
