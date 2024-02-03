@@ -19,7 +19,7 @@ LOG_MODULE_DECLARE(golioth_iot, LOG_LEVEL_INF);
 #include <zephyr/sys/printk.h>
 #include <zephyr/init.h>
 
-#include "wifi_util.h"
+#include <wifi_util.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_event.h>
 
@@ -248,9 +248,6 @@ static int __wifi_args_to_params(struct wifi_connect_req_params *params)
 
 int wifi_connect(void)
 {
-	struct net_if *iface = net_if_get_default();
-	static struct wifi_connect_req_params cnx_params;
-
 	memset(&context, 0, sizeof(context));
 
 	net_mgmt_init_event_callback(&wifi_shell_mgmt_cb,
@@ -273,6 +270,9 @@ int wifi_connect(void)
 		CONFIG_NET_CONFIG_MY_IPV4_ADDR,
 		CONFIG_NET_CONFIG_MY_IPV4_NETMASK,
 		CONFIG_NET_CONFIG_MY_IPV4_GW);
+
+	struct net_if *iface = net_if_get_default();
+	static struct wifi_connect_req_params cnx_params;
 
 	context.connected = false;
 	context.connect_result = false;

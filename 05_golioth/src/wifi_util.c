@@ -19,7 +19,7 @@ LOG_MODULE_DECLARE(add_golioth, LOG_LEVEL_INF);
 #include <zephyr/sys/printk.h>
 #include <zephyr/init.h>
 
-#include "wifi_util.h"
+#include <wifi_util.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_event.h>
 
