@@ -82,17 +82,20 @@ section on this in the prj.conf file. The default is WPA2.
    # Flash the binary to your device
    $ (.venv) west flash
 
-Using Kasm
-**********
+Using Codespaces
+****************
 
-When using Kasm, the compiled binary must be downloaded and flashed to your
-device locally using the `nRF Connect for Desktop
-<https://www.nordicsemi.com/Products/Development-tools/nrf-connect-for-desktop/>`
-programmer app.
+When using Codespaces, the compiled binary must be downloaded and flashed to your device locally
+using the `nRF Connect for Desktop
+<https://www.nordicsemi.com/Products/Development-tools/nrf-connect-for-desktop/>`_ programmer app.
 
-Use the following command to copy a compiled hex file to the Kasm download folder.
-(A timestamp and the name of the app will be added to the filename.)
+Use the following command to copy a compiled hex file to the Download folder. (A timestamp and the
+name of the app will be added to the filename.)
 
 .. code-block:: console
 
-   $ (.venv) west kasm download
+   $ (.venv) west download
+
+For help, please consult the `Build Your First Zephyr App
+<https://training.golioth.io/docs/zephyr-training/helloworld>`_ section of the Developer Training
+docs.
