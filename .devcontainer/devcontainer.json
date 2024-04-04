@@ -2,10 +2,8 @@
   "image": "golioth/golioth-zephyr-base:0.16.3-SDK-v0",
   "workspaceMount": "source=${localWorkspaceFolder},target=/zephyr-training/app,type=bind",
   "workspaceFolder": "/zephyr-training",
-  "onCreateCommand": "chmod +x app/.devcontainer/init.sh && app/.devcontainer/init.sh",
-  "remoteEnv": {
-    "LC_ALL": "C"
-  },
+  "onCreateCommand": "bash -i /zephyr-training/app/.devcontainer/onCreateCommand.sh",
+  "remoteEnv": { "LC_ALL": "C" },
   "customizations": {
     "vscode": {
       "settings": {
