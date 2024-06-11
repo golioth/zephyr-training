@@ -14,6 +14,7 @@ LOG_MODULE_REGISTER(golioth_iot, LOG_LEVEL_DBG);
 #include <golioth/stream.h>
 #include <samples/common/sample_credentials.h>
 
+#include <zcbor_encode.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/net/coap.h>
@@ -191,7 +192,7 @@ int main(void)
 	struct sensor_value temperature;
 	int counter = 0;
 	int err;
-	char sbuf[32];
+	uint8_t buf[16];
 
 	LOG_DBG("Start Golioth IoT");
 
@@ -233,20 +234,34 @@ int main(void)
 		LOG_INF("Hello Golioth! %d", counter);
 
 		get_temperature(&temperature);
-		snprintk(sbuf, sizeof(sbuf), "%d.%06d",
-				temperature.val1, temperature.val2);
-		LOG_INF("Streaming Temperature to Golioth: %s", sbuf);
 
-		err = golioth_stream_set_async(client,
-					       "temp",
-					       GOLIOTH_CONTENT_TYPE_JSON,
-					       sbuf,
-					       strlen(sbuf),
-					       temperature_push_handler,
-					       NULL);
+		/* Create zcbor state variable for encoding */
+		ZCBOR_STATE_E(zcbor_e_state, 1, buf, sizeof(buf), 1);
 
-		if (err) {
-			LOG_WRN("Failed to push temperature: %d", err);
+		bool ok = zcbor_map_start_encode(zcbor_e_state, 1) &&
+			  zcbor_tstr_put_lit(zcbor_e_state, "temp") &&
+			  zcbor_float64_put(zcbor_e_state, sensor_value_to_double(&temperature)) &&
+			  zcbor_map_end_encode(zcbor_e_state, 1);
+
+		if (ok) {
+			size_t payload_length = zcbor_e_state->payload - buf;
+
+                        LOG_INF("Streaming Temperature to Golioth: %i.%06u",
+                                temperature.val1, abs(temperature.val2));
+
+                        err = golioth_stream_set_async(client,
+						       "",
+						       GOLIOTH_CONTENT_TYPE_CBOR,
+						       buf,
+						       payload_length,
+						       temperature_push_handler,
+						       NULL);
+                        if (err) {
+                          LOG_WRN("Failed to push temperature: %d", err);
+                        }
+
+                } else {
+			LOG_ERR("Error encoding CBOR packet");
 		}
 
 		++counter;
