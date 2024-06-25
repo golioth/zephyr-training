@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.0] 2024-06-12
 
 ### Changed
-- Use Golioth Firmware SDK v0.12.1
+- Use Golioth Firmware SDK v0.13.1
 - Bump PSK-ID/PSK length limit from 64 to 128
 - Use CBOR to send temperature stream data to match default pipeline expectation
 
