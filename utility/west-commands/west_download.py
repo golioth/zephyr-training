@@ -83,15 +83,15 @@ class Download(WestCommand):
         cmake_vals = self.get_cmake_values(build_dir)
         board_name = cmake_vals["board_name"]
 
-        if board_name == "nrf7002dk_nrf5340_cpuapp":
+        if board_name == "nrf7002dk/nrf5340/cpuapp":
             bin_name = 'zephyr.hex'
-        elif board_name == "nrf9160dk_nrf9160_ns":
+        elif board_name == "nrf9160dk/nrf9160/ns":
             bin_name = 'merged.hex'
         else:
             log.die("Don't know which binary to move for this board:", board_name)
 
         app_name = cmake_vals["cmake_src_dir"]
-        format_filename = '{}_{}_%H%M%S.hex'.format(board_name.split('_')[0], app_name)
+        format_filename = '{}_{}_%H%M%S.hex'.format(board_name.split('/')[0], app_name)
 
         new_filename = time.strftime(format_filename, time.localtime())
         download_file_path=os.path.join(output_dir, new_filename)
