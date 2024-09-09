@@ -4,7 +4,7 @@ manifest:
   projects:
     - name: golioth
       path: modules/lib/golioth-firmware-sdk
-      revision: v0.14.0
+      revision: v0.15.0
       url: https://github.com/golioth/golioth-firmware-sdk
       submodules: true
       west-commands: scripts/west-commands.yml
@@ -22,6 +22,7 @@ manifest:
           - mcuboot
           - net-tools
           - nrfxlib
+          - oberon-psa-crypto
           - qcbor
           - segger
           - tfm-mcuboot
@@ -31,7 +32,7 @@ manifest:
 
     - name: zephyr-network-info
       path: deps/modules/lib/network-info
-      revision: v1.1.1
+      revision: v1.2.0
       url: https://github.com/golioth/zephyr-network-info
 
   self:

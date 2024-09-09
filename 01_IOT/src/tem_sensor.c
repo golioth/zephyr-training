@@ -5,7 +5,7 @@
  */
 
 #include <zephyr/drivers/sensor.h>
-#include <zephyr/random/rand32.h>
+#include <zephyr/random/random.h>
 
 #define TEM_GEN_DELAY_S 1
 #define TEM_MIN 20

@@ -75,9 +75,9 @@ section on this in the prj.conf file. The default is WPA2.
    $ (.venv) cd app
    # Choose one of the following build commands:
    # For nRF7002dk
-   $ (.venv) west build -b nrf7002dk_nrf5340_cpuapp 01_IOT
+   $ (.venv) west build -b nrf7002dk/nrf5340/cpuapp 01_IOT
    # For nRF9160dk
-   $ (.venv) west build -b nrf9160dk_nrf9160_ns 01_IOT
+   $ (.venv) west build -b nrf9160dk/nrf9160/ns 01_IOT
 
    # Flash the binary to your device
    $ (.venv) west flash
