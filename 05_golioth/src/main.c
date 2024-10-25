@@ -16,11 +16,7 @@ LOG_MODULE_REGISTER(add_golioth, LOG_LEVEL_DBG);
 /* Helper functions for passing credentials to Golioth client */
 #include <samples/common/sample_credentials.h>
 
-#ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
-#include <wifi_util.h>
-#else
 #include <samples/common/net_connect.h>
-#endif
 
 /* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS   1000
@@ -82,13 +78,7 @@ int main(void)
 	k_timer_start(&my_timer, K_MSEC(200), K_MSEC(200));
 
 	/* Start network connection (if necessary) */
-#ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
-	wifi_connect();
-#else
-	if (IS_ENABLED(CONFIG_GOLIOTH_SAMPLE_COMMON)) {
-		net_connect();
-	}
-#endif
+	net_connect();
 
 	int counter = 0;
 
