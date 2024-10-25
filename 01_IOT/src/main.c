@@ -23,11 +23,7 @@ LOG_MODULE_REGISTER(golioth_iot, LOG_LEVEL_DBG);
 #include "tem_sensor.h"
 #include <network_info.h>
 
-#ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
-#include <wifi_util.h>
-#else
 #include <samples/common/net_connect.h>
-#endif
 
 #define LOOP_DELAY_S_MIN 1
 #define LOOP_DELAY_S_MAX 100
@@ -207,13 +203,7 @@ int main(void)
 	/* Buttons share the same port; this will add callback for both */
 	gpio_add_callback(button0.port, &button_cb_data);
 
-#ifdef CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP
-	wifi_connect();
-#else
-	if (IS_ENABLED(CONFIG_GOLIOTH_SAMPLE_COMMON)) {
-		net_connect();
-	}
-#endif
+	net_connect();
 
 	const struct golioth_client_config *client_config = golioth_sample_credentials_get();
 
@@ -228,7 +218,6 @@ int main(void)
 	golioth_rpc_register(rpc, "multiply", on_multiply, NULL);
 	golioth_settings_register_int_with_range(settings, "LOOP_DELAY_S", LOOP_DELAY_S_MIN, LOOP_DELAY_S_MAX, on_loop_delay_setting, NULL);
 	golioth_settings_register_int_with_range(settings, "BLINK_DELAY_MS", BLINK_DELAY_MS_MIN, BLINK_DELAY_MS_MAX, on_blink_delay_setting, NULL);
-
 
 	while (true) {
 		LOG_INF("Hello Golioth! %d", counter);
