@@ -34,10 +34,10 @@ From the root directory of this repository, build using the following command:
 .. code-block:: bash
 
    $ # Building for nRF7002dk
-   $ (.venv) west build -b nrf7002dk_nrf5340_cpuapp 02_helloworld
+   $ (.venv) west build -b nrf7002dk/nrf5340/cpuapp 02_helloworld
 
    $ # Building for nRF9160dk
-   $ (.venv) west build -b nrf9160dk_nrf9160_ns 02_helloworld
+   $ (.venv) west build -b nrf9160dk/nrf9160/ns 02_helloworld
 
 Flash project
 =============
