@@ -1,0 +1,24 @@
+# Copyright (c) 2023 Golioth, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test firmware
+
+on:
+  pull_request:
+
+  push:
+    branches: [ main ]
+
+jobs:
+  test_build_nrf9160dk:
+    uses: ./.github/workflows/build_zephyr.yml
+    with:
+      ZEPHYR_SDK: 0.16.3
+      BOARD: nrf9160dk/nrf9160/ns
+      ARTIFACT: false
+  test_build_nrf7002:
+    uses: ./.github/workflows/build_zephyr.yml
+    with:
+      ZEPHYR_SDK: 0.16.3
+      BOARD: nrf7002dk/nrf5340/cpuapp
+      ARTIFACT: false

@@ -1,0 +1,53 @@
+# Copyright (c) 2023 Golioth, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Create Release
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'Release Version.'
+                required: true
+                default: 'v0.0.0'
+                type: string
+
+jobs:
+    build-binaries:
+        strategy:
+            matrix:
+              ZEPHYR_SDK: [0.16.3]
+              BOARD: ["nrf9160dk/nrf9160/ns","nrf7002dk/nrf5340/cpuapp"]
+
+        uses: ./.github/workflows/build_zephyr.yml
+        with:
+          ZEPHYR_SDK: ${{ matrix.ZEPHYR_SDK }}
+          BOARD: ${{ matrix.BOARD }}
+          ARTIFACT: true
+          TAG: ${{ inputs.version }}
+
+    upload-binaries:
+        needs: build-binaries
+
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Download artifact
+              uses: actions/download-artifact@v4
+              with:
+                pattern: build_artifacts_*
+                path: ~/artifacts
+                merge-multiple: true
+
+            - name: Create Release manually with GH CLI
+              run: gh release create --title ${{ inputs.version }} --draft ${{ inputs.version }}
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Upload artifacts to release
+              run: gh release upload --clobber ${{ inputs.version }} ~/artifacts/*.*
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

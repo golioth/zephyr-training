@@ -1,0 +1,90 @@
+# Copyright (c) 2024 Golioth, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Build Zephyr binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      ZEPHYR_SDK:
+        required: true
+        type: string
+        default: 0.16.3
+      BOARD:
+        required: true
+        type: string
+        default: nrf9160dk/nr9160/ns
+      ARTIFACT:
+        required: true
+        type: boolean
+        default: false
+      TAG:
+        type: string
+
+  workflow_call:
+    inputs:
+      ZEPHYR_SDK:
+        required: true
+        type: string
+      BOARD:
+        required: true
+        type: string
+      ARTIFACT:
+        required: true
+        type: boolean
+      TAG:
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container: golioth/golioth-zephyr-base:${{ inputs.ZEPHYR_SDK }}-SDK-v0
+
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-${{ inputs.ZEPHYR_SDK }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: app
+
+      - name: Process Board name
+        id: nicename
+        shell: bash
+        run: |
+          BOARD_NICENAME=${{ inputs.BOARD }}
+          BOARD_NICENAME=$(echo $BOARD_NICENAME | cut -d/ -f1)
+          echo "BOARD_NICENAME=${BOARD_NICENAME}" >> $GITHUB_OUTPUT
+
+      - name: Setup West workspace
+        run: |
+          west init -l app
+          west update --narrow -o=--depth=1
+          west zephyr-export
+          pip3 install -r deps/zephyr/scripts/requirements-base.txt
+          # Needed for TF-M
+          pip3 install cryptography pyasn1 pyyaml cbor>=1.0.0 imgtool>=1.9.0 jinja2 click
+
+      - name: Build with West
+        run: |
+          west build -p -b ${{ inputs.BOARD }} app/01_IOT
+
+      - name: Prepare artifacts
+        shell: bash
+        if: inputs.ARTIFACT == true && inputs.TAG != ''
+
+        run: |
+          cd build
+          mkdir -p artifacts
+          mv zephyr/merged.hex ./artifacts/Golioth_${{ steps.nicename.outputs.BOARD_NICENAME }}_kitchen_sink_${{ inputs.TAG }}.hex
+
+      # Run IDs are unique per repo but are reused on re-runs
+      - name: Save artifact
+        if: inputs.ARTIFACT == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_artifacts_${{ github.run_id }}_${{ steps.nicename.outputs.BOARD_NICENAME }}
+          path: |
+            build/artifacts/*
