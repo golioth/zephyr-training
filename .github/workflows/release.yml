@@ -16,14 +16,20 @@ jobs:
     build-binaries:
         strategy:
             matrix:
-              ZEPHYR_SDK: [0.16.3]
-              BOARD: ["nrf9160dk/nrf9160/ns","nrf7002dk/nrf5340/cpuapp"]
+              include:
+                - BOARD: nrf9160dk/nrf9160/ns
+                  ZEPHYR_SDK: 0.16.3
+                  HEX_FILE: merged.hex
+                - BOARD: nrf7002dk/nrf5340/cpuapp
+                  ZEPHYR_SDK: 0.16.3
+                  HEX_FILE: zephyr.hex
 
         uses: ./.github/workflows/build_zephyr.yml
         with:
           ZEPHYR_SDK: ${{ matrix.ZEPHYR_SDK }}
           BOARD: ${{ matrix.BOARD }}
           ARTIFACT: true
+          HEX_FILE: ${{ matrix.HEX_FILE }}
           TAG: ${{ inputs.version }}
 
     upload-binaries:

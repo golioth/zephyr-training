@@ -7,18 +7,27 @@ on:
   workflow_dispatch:
     inputs:
       ZEPHYR_SDK:
+        description: Zephyr toolchain version
         required: true
         type: string
         default: 0.16.3
       BOARD:
+        description: Zephyr board to build
         required: true
         type: string
         default: nrf9160dk/nr9160/ns
       ARTIFACT:
+        description: Whether or not to save the artifact produced by the build
         required: true
         type: boolean
         default: false
+      HEX_FILE:
+        description: Name of the hex file to save
+        required: false
+        type: string
+        default: merged.hex
       TAG:
+        description: version number of the firmware build
         type: string
 
   workflow_call:
@@ -32,6 +41,9 @@ on:
       ARTIFACT:
         required: true
         type: boolean
+      HEX_FILE:
+        required: true
+        type: string
       TAG:
         type: string
 
@@ -78,7 +90,7 @@ jobs:
         run: |
           cd build
           mkdir -p artifacts
-          mv zephyr/merged.hex ./artifacts/Golioth_${{ steps.nicename.outputs.BOARD_NICENAME }}_kitchen_sink_${{ inputs.TAG }}.hex
+          mv zephyr/${{ inputs.HEX_FILE }} ./artifacts/Golioth_${{ steps.nicename.outputs.BOARD_NICENAME }}_kitchen_sink_${{ inputs.TAG }}.hex
 
       # Run IDs are unique per repo but are reused on re-runs
       - name: Save artifact
