@@ -13,14 +13,14 @@ jobs:
   test_build_nrf9160dk:
     uses: ./.github/workflows/build_zephyr.yml
     with:
-      ZEPHYR_SDK: 0.16.3
+      ZEPHYR_SDK: 0.17.4
       BOARD: nrf9160dk/nrf9160/ns
       ARTIFACT: false
       HEX_FILE: merged.hex
   test_build_nrf7002:
     uses: ./.github/workflows/build_zephyr.yml
     with:
-      ZEPHYR_SDK: 0.16.3
+      ZEPHYR_SDK: 0.17.4
       BOARD: nrf7002dk/nrf5340/cpuapp
       ARTIFACT: false
       HEX_FILE: zephyr.hex
