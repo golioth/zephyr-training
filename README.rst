@@ -58,7 +58,7 @@ terminal and the following commands:
    uart:~$ settings set wifi/psk <my-wifi-ap-password>
    uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
    uart:~$ settings set golioth/psk <my-psk>
-   uart:~$ kernel reboot cold
+   uart:~$ kernel reboot
 
 These credentials will be stored in the settings partition and will survive new
 application firmware flashed directly, or via OTA update.

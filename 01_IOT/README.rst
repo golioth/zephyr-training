@@ -77,7 +77,7 @@ nRF7002dk
    uart:~$ settings set wifi/psk <my-wifi-ap-password>
    uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
    uart:~$ settings set golioth/psk <my-psk>
-   uart:~$ kernel reboot cold
+   uart:~$ kernel reboot
 
 nRF9160dk
 ---------
@@ -89,7 +89,7 @@ nRF9160dk
 
    uart:~$ settings set golioth/psk-id <my-psk-id@my-project>
    uart:~$ settings set golioth/psk <my-psk>
-   uart:~$ kernel reboot cold
+   uart:~$ kernel reboot
 
 Application Behavior
 ********************
