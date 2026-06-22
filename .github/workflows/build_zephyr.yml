@@ -75,6 +75,7 @@ jobs:
           west init -l app
           west update --narrow -o=--depth=1
           west zephyr-export
+          west patch apply
           pip3 install -r deps/zephyr/scripts/requirements-base.txt
           # Needed for TF-M
           pip3 install cryptography pyasn1 pyyaml cbor>=1.0.0 imgtool>=1.9.0 jinja2 click

@@ -1,0 +1,19 @@
+patches:
+  - path: 0001-zephyr-sample-common-check-for-wifi-ready-before-con.patch
+    sha256sum: d05c21912637c39c0e3fb54582fcd859b375881034dabcb179e7b5455cee638f
+    module: golioth-firmware-sdk
+    author: Mike Szczys
+    email: michael.szczys@canonical.com
+    date: 2026-06-23
+  - path: 0002-zephyr-samples-common-check-for-wifi-ready-before-co.patch
+    sha256sum: 9fb96a4e63c5921ddcf48cc85fa0cea296d3633b0b60e35cae30bcaa6e8583e5
+    module: golioth-firmware-sdk
+    author: Mike Szczys
+    email: michael.szczys@canonical.com
+    date: 2026-06-23
+  - path: 0003-zephyr-common-check-for-NULL-interface-in-net_connec.patch
+    sha256sum: e66fe97b78de5e74e1caf1ad8020194b411d4d77c14c5314f06558bbfea23006
+    module: golioth-firmware-sdk
+    author: Mike Szczys
+    email: michael.szczys@canonical.com
+    date: 2026-06-23

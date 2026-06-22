@@ -34,7 +34,11 @@ Use ``west`` to initialize and install
    west init -m git@github.com:golioth/zephyr-training.git .
    west update
    west zephyr-export
+   west patch apply
    pip install -r deps/zephyr/scripts/requirements.txt
+
+Note that you may need to use ``west patch clean`` to restore patched modules before re-running
+``west update``.
 
 Building the Training Applications
 **********************************
