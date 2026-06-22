@@ -50,13 +50,14 @@ void wake_system_thread(void)
 }
 
 static void selected_led_state_handler(struct golioth_client *client,
-				       const struct golioth_response *response,
-				       const char *path,
-				       void *arg)
+				      enum golioth_status status,
+				      const struct golioth_coap_rsp_code *coap_rsp_code,
+				      const char *path,
+				      void *arg)
 {
-	if (response->status != GOLIOTH_OK)
+	if (status != GOLIOTH_OK)
 	{
-		LOG_WRN("Failed to set selected LED state on Golioth: %d", response->status);
+		LOG_WRN("Failed to set selected LED state on Golioth: %d", status);
 	}
 }
 
@@ -168,13 +169,12 @@ static void on_client_event(struct golioth_client *client,
 }
 
 static void temperature_push_handler(struct golioth_client *client,
-				     const struct golioth_response *response,
-				     const char *path,
-				     void *arg)
-{
-	if (response->status != GOLIOTH_OK)
-	{
-		LOG_WRN("Failed to push temperature: %d", response->status);
+				     enum golioth_status status,
+				     const struct golioth_coap_rsp_code *coap_rsp_code,
+				     const char *path, void *arg) {
+
+	if (status != GOLIOTH_OK) {
+		LOG_WRN("Failed to push temperature: %d", status);
 		return;
 	}
 
