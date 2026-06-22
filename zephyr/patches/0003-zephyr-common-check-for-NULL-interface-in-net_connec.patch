@@ -1,0 +1,33 @@
+From 342460a91deb79052a32a6941d1885b789cf4cc9 Mon Sep 17 00:00:00 2001
+From: Mike Szczys <michael.szczys@canonical.com>
+Date: Tue, 23 Jun 2026 16:31:35 -0500
+Subject: [PATCH 2/2] zephyr: common: check for NULL interface in net_connect
+
+When net_if_get_default() is called and not interface exists it will return
+NULL. Check, log, and return before calling net_if_up() to prevent a crash.
+
+Signed-off-by: Mike Szczys <michael.szczys@canonical.com>
+---
+ examples/zephyr/common/net_connect.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/examples/zephyr/common/net_connect.c b/examples/zephyr/common/net_connect.c
+index 59bb5ae..c988cae 100644
+--- a/examples/zephyr/common/net_connect.c
++++ b/examples/zephyr/common/net_connect.c
+@@ -48,6 +48,12 @@ void net_connect(void)
+ {
+     struct net_if *iface = net_if_get_default();
+ 
++    if (!iface)
++    {
++        LOG_ERR("No network interface found");
++        return;
++    }
++
+     if (!net_if_is_up(iface))
+     {
+         LOG_INF("Bringing up network interface");
+-- 
+2.54.0
+

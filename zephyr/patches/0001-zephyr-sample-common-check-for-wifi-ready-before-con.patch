@@ -1,0 +1,68 @@
+From 9e89015b061d17a77eb8e53ef4089f6f375debca Mon Sep 17 00:00:00 2001
+From: Mike Szczys <michael.szczys@canonical.com>
+Date: Tue, 23 Jun 2026 09:50:40 -0500
+Subject: [PATCH 1/2] zephyr: sample: common: check for wifi ready before
+ connect
+
+Add wifi_iface_ready() to detect when the WiFi interface is ready to
+connect. Use it to guard the connect operation so that devices that need
+more time to bring up the interface (eg: nrf70) do not immediately fail to
+connect because the interface is still spinning up.
+
+When wifi_iface_ready() returns false, the guard enqueues a disconnect
+event. Because the disconnect event fired during the connecting state, it
+triggers a retry after 1000ms using the wifi_state_change_map already in
+place.
+
+Signed-off-by: Mike Szczys <michael.szczys@canonical.com>
+---
+ examples/zephyr/common/wifi.c | 29 +++++++++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+
+diff --git a/examples/zephyr/common/wifi.c b/examples/zephyr/common/wifi.c
+index 81933be..9d6e150 100644
+--- a/examples/zephyr/common/wifi.c
++++ b/examples/zephyr/common/wifi.c
+@@ -168,10 +168,39 @@ static void wifi_mgmt_connecting_update(struct wifi_manager_data *wifi_mgmt, boo
+     }
+ }
+ 
++static bool wifi_iface_ready(struct wifi_manager_data *wifi_mgmt)
++{
++    struct wifi_iface_status status = {0};
++    int err;
++
++    err = net_mgmt(NET_REQUEST_WIFI_IFACE_STATUS, wifi_mgmt->iface, &status, sizeof(status));
++    if (err)
++    {
++        LOG_DBG("WiFi iface status not ready yet: %d", err);
++        return false;
++    }
++
++    switch (status.state)
++    {
++        case WIFI_STATE_INTERFACE_DISABLED:
++        case WIFI_STATE_UNKNOWN:
++            return false;
++        default:
++            LOG_DBG("WiFi iface not ready, state=%d", status.state);
++            return true;
++    }
++}
++
+ static void wifi_connect(struct wifi_manager_data *wifi_mgmt)
+ {
+     int err;
+ 
++    if (!wifi_iface_ready(wifi_mgmt))
++    {
++        wifi_event_notify(wifi_mgmt, WIFI_EVENT_DISCONNECTED);
++        return;
++    }
++
+     LOG_INF("Connecting to stored WiFi network");
+ 
+     wifi_mgmt_connecting_update(wifi_mgmt, true);
+-- 
+2.54.0
+

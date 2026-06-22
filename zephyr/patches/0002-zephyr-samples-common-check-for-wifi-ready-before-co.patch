@@ -1,0 +1,35 @@
+From 6095fa02ff14cc4352da55aebea8f8ca5e509ad4 Mon Sep 17 00:00:00 2001
+From: Mike Szczys <michael.szczys@canonical.com>
+Date: Mon, 22 Jun 2026 16:34:51 -0500
+Subject: [PATCH] zephyr: sample: common: fix wifi event cb prototypes
+
+Signed-off-by: Mike Szczys <michael.szczys@canonical.com>
+---
+ examples/zephyr/common/wifi.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/examples/zephyr/common/wifi.c b/examples/zephyr/common/wifi.c
+index f1eff8e..333869f 100644
+--- a/examples/zephyr/common/wifi.c
++++ b/examples/zephyr/common/wifi.c
+@@ -413,7 +413,7 @@ static inline atomic_val_t atomic_update(atomic_t *target, atomic_val_t value, a
+ }
+ 
+ static void ipv4_changed(struct net_mgmt_event_callback *cb,
+-                         uint64_t mgmt_event,
++                         uint32_t mgmt_event,
+                          struct net_if *iface)
+ {
+     struct wifi_manager_data *wifi_mgmt = CONTAINER_OF(cb, struct wifi_manager_data, ipv4_mgmt_cb);
+@@ -439,7 +439,7 @@ static inline int wifi_connect_error(const struct wifi_status *status)
+ }
+ 
+ static void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
+-                                    uint64_t mgmt_event,
++                                    uint32_t mgmt_event,
+                                     struct net_if *iface)
+ {
+     struct wifi_manager_data *wifi_mgmt = CONTAINER_OF(cb, struct wifi_manager_data, wifi_mgmt_cb);
+-- 
+2.54.0
+
