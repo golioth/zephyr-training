@@ -48,8 +48,8 @@ class Download(WestCommand):
         with open(os.path.join(build_dir, 'CMakeCache.txt')) as f:
             cmake_lines = f.readlines()
         for line in cmake_lines:
-            if line.startswith("APPLICATION_SOURCE_DIR:PATH="):
-                app_path = line.split("APPLICATION_SOURCE_DIR:PATH=")[1]
+            if line.startswith("APP_DIR:PATH="):
+                app_path = line.split("APP_DIR:PATH=")[1]
                 return_vals["cmake_src_dir"] = os.path.basename(app_path).strip()
             elif line.startswith("BOARD:STRING="):
                 board_string = line.split("BOARD:STRING=")[1].strip()
@@ -83,9 +83,7 @@ class Download(WestCommand):
         cmake_vals = self.get_cmake_values(build_dir)
         board_name = cmake_vals["board_name"]
 
-        if board_name == "nrf7002dk/nrf5340/cpuapp":
-            bin_name = 'zephyr.hex'
-        elif board_name == "nrf9160dk/nrf9160/ns":
+        if board_name == "nrf7002dk/nrf5340/cpuapp" or board_name == "nrf9160dk/nrf9160/ns":
             bin_name = 'merged.hex'
         else:
             log.die("Don't know which binary to move for this board:", board_name)
