@@ -8,6 +8,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] 2026-06-24
+
+### Changed
+- Use Golioth Firmware SDK v0.22.0
+- Update callbacks to match upstream changes
+- Patch Golioth Firmware SDK so nRF7002dk works with net_connect()
+- Patch Golioth Firmware SDK to silence callback type warning stemming from NCS v3.1.1
+- Use zephyr-network-info v1.2.2
+- Update workflows to use newest containers and repo initialization procedures
+- Update workflows to use latest releases of github actions and peg them to a given hash
+
 ## [2.4.0] 2024-10-29
 
 ### Changed
