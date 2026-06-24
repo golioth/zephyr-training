@@ -103,7 +103,7 @@ jobs:
         run: |
           cd build
           mkdir -p artifacts
-          mv zephyr/${{ inputs.HEX_FILE }} ./artifacts/Golioth_${{ steps.nicename.outputs.BOARD_NICENAME }}_kitchen_sink_${{ inputs.TAG }}.hex
+          mv ${{ inputs.HEX_FILE }} ./artifacts/Golioth_${{ steps.nicename.outputs.BOARD_NICENAME }}_kitchen_sink_${{ inputs.TAG }}.hex
 
       # Run IDs are unique per repo but are reused on re-runs
       - name: Save artifact

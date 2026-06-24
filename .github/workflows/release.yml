@@ -22,7 +22,7 @@ jobs:
                   HEX_FILE: merged.hex
                 - BOARD: nrf7002dk/nrf5340/cpuapp
                   ZEPHYR_SDK: 0.17.4
-                  HEX_FILE: zephyr.hex
+                  HEX_FILE: merged.hex
 
         uses: ./.github/workflows/build_zephyr.yml
         with:
