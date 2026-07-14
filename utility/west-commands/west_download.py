@@ -93,7 +93,7 @@ class Download(WestCommand):
 
         new_filename = time.strftime(format_filename, time.localtime())
         download_file_path=os.path.join(output_dir, new_filename)
-        zephyrhex_path=os.path.join(build_dir, 'zephyr', bin_name)
+        zephyrhex_path=os.path.join(build_dir, bin_name)
 
         if not os.path.exists(zephyrhex_path):
             log.die('cannot find binary: ', zephyrhex_path)
